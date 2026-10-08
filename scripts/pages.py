@@ -268,6 +268,7 @@ def generate_site(report_path, output_path, row_bytes, cell_bytes):
         directory.mkdir(parents=True, exist_ok=True)
         content = (SITE_DIRECTORY / "apps" / app["id"] / "index.html").read_text()
         layout = (SHARED_DIRECTORY / "layout.html").read_text()
+        layout = layout.replace("__WIDTH_CLASS__", "site-container-wide" if app.get("wide") else "")
         layout = layout.replace("__TITLE__", app["title"]).replace("<!--__CONTENT__-->", content)
         (directory / "index.html").write_text(render_page(layout, "../" * len(Path(app["route"]).parts), app["id"]), encoding="utf-8")
         for asset in (SITE_DIRECTORY / "apps" / app["id"]).glob("*.js"):

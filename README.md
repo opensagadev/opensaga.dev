@@ -12,7 +12,8 @@ builds their latest branches.
 | `/play/` | Experimental Saga WebAssembly player | Bazel build and your own Android OBB |
 | `/nudat/` | NuDat archive explorer | Rust library built to WASM and your local DAT/OBB |
 
-NuDat browses folders with breadcrumbs, searches all archive paths, previews
+NuDat uses a wide, three-pane explorer with a folder sidebar, back/forward/up
+navigation, breadcrumbs, a file list, and a details panel. It searches all archive paths, previews
 text inline, verifies archives, and downloads individual files or ZIPs of a
 folder, search results, or a selection. An included synthetic example makes
 the complete workflow available without original game assets. Long operations
@@ -54,7 +55,7 @@ The theme uses the logo’s violet for actions and selection, blue for secondary
 data, gold for archive folders and ambiguity, and slate for surfaces. It follows
 the system light/dark preference. Navigation, panels, buttons, inputs, tables,
 and focus states all use these shared tokens. There are no page-local stylesheets. `site/apps.json` supplies navigation and
-application titles. Existing `/play/` and `/progress/` links, including `?obb=`,
+application titles; `"wide": true` gives an application the shared wide workspace. Existing `/play/` and `/progress/` links, including `?obb=`,
 retain their behavior.
 
 Add a manifest entry and a `site/apps/<id>/index.html` content fragment. The
@@ -71,9 +72,10 @@ The library handles `Read`, `Seek`, and `Write` sources, while the native CLI
 owns files, directories, temporary staging, and thread scheduling.
 
 The progress explorer keeps its summary at the reading width and its map in
-a wider workspace around 90% of the desktop viewport height. Scroll normally
-to move down the page; use Ctrl/Cmd + scroll or the zoom buttons to inspect the
-map. Labels are optional, and source files can be searched in the sidebar.
+a wider workspace around 90% of the desktop viewport height. Scroll over the map or use its zoom buttons to zoom; drag to pan. Labels are
+on by default, including source-unit headings in the function-size view, and
+can be toggled off. Source files can be searched in the sidebar. Matching
+graphs retain the red-to-green score scale.
 
 Regenerate the synthetic NuDat example with
 `python3 scripts/create_example.py --nudat /path/to/nudat`. The checked-in

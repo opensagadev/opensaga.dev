@@ -3,6 +3,8 @@ const pageSize = 50;
 let worker, ready = false, busy = false, generation = 0, sequence = 0;
 let entries = [], visible = [], page = 0, folder = '', archiveName = '', currentFile = null, activeEntry = null;
 let selected = new Set(), previewVersion = 0;
+let folderHistory = [''], historyIndex = 0, folderRoot = null;
+const expandedFolders = new Set(['']);
 const pending = new Map();
 const countLabel = (count, noun) => `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
 const status = (text, error = false) => {
@@ -81,13 +83,67 @@ function makeButton(text, className, action) {
   button.type = 'button'; button.textContent = text; button.className = className; button.onclick = action;
   return button;
 }
-function navigate(path) {
+function buildFolders() {
+  folderRoot = { name: archiveName, path: '', children: new Map() };
+  for (const entry of entries) {
+    let parent = folderRoot;
+    for (const part of entry.path.split('/').slice(0, -1)) {
+      const path = parent.path + part + '/';
+      if (!parent.children.has(part)) parent.children.set(part, { name: part, path, children: new Map() });
+      parent = parent.children.get(part);
+    }
+  }
+}
+function renderFolders() {
+  if (!folderRoot) return;
+  const focusedFolder = document.activeElement?.dataset.folderPath;
+  function branch(node) {
+    const item = document.createElement('li');
+    const row = document.createElement('div'); row.className = 'folder-tree-row';
+    const expanded = expandedFolders.has(node.path);
+    const toggle = makeButton(expanded ? '⌄' : '›', 'folder-disclosure', () => {
+      expanded ? expandedFolders.delete(node.path) : expandedFolders.add(node.path);
+      renderFolders();
+      [...$('folder-tree').querySelectorAll('[data-disclosure]')].find(button => button.dataset.disclosure === node.path)?.focus();
+    });
+    toggle.dataset.disclosure = node.path;
+    toggle.setAttribute('aria-label', `${expanded ? 'Collapse' : 'Expand'} ${node.name}`);
+    toggle.setAttribute('aria-expanded', String(expanded));
+    if (!node.children.size) { toggle.disabled = true; toggle.classList.add('is-leaf'); }
+    const button = makeButton('', 'folder-link', () => navigate(node.path));
+    button.dataset.folderPath = node.path; button.title = node.path || archiveName;
+    if (node.path === folder && !$('filter').value.trim()) button.setAttribute('aria-current', 'location');
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('class', 'entry-icon folder-icon'); icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('aria-hidden', 'true');
+    const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    shape.setAttribute('d', 'M3 7V5a1 1 0 0 1 1-1h5l2 3h9a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Z'); icon.append(shape);
+    const label = document.createElement('span'); label.textContent = node.name;
+    button.append(icon, label); row.append(toggle, button); item.append(row);
+    if (expanded && node.children.size) {
+      const list = document.createElement('ul');
+      [...node.children.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })).forEach(child => list.append(branch(child)));
+      item.append(list);
+    }
+    return item;
+  }
+  const list = document.createElement('ul'); list.append(branch(folderRoot));
+  $('folder-tree').replaceChildren(list);
+  if (focusedFolder !== undefined) [...$('folder-tree').querySelectorAll('[data-folder-path]')].find(button => button.dataset.folderPath === focusedFolder)?.focus({ preventScroll: true });
+}
+function navigate(path, record = true) {
+  if (record && path !== folder) {
+    folderHistory.splice(historyIndex + 1);
+    folderHistory.push(path); historyIndex++;
+  }
+  let ancestor = '';
+  expandedFolders.add(ancestor);
+  for (const part of path.split('/').filter(Boolean)) { ancestor += part + '/'; expandedFolders.add(ancestor); }
   folder = path; page = 0; $('filter').value = '';
   activeEntry = null; previewVersion++;
   $('detail-empty').hidden = false; $('detail-content').hidden = true;
   render();
   document.querySelector('.file-list-scroll').scrollTop = 0;
-  $('breadcrumbs').lastElementChild.focus();
+  $('breadcrumbs').lastElementChild.focus({ preventScroll: true });
 }
 function render() {
   const focusedPath = document.activeElement?.dataset.fileAction;
@@ -110,7 +166,7 @@ function render() {
   const pages = Math.max(1, Math.ceil(items.length / pageSize));
   page = Math.min(page, pages - 1);
   visible = items.slice(page * pageSize, (page + 1) * pageSize);
-  const crumbs = [makeButton('All files', 'breadcrumb', () => navigate(''))];
+  const crumbs = [makeButton(archiveName || 'Archive', 'breadcrumb', () => navigate(''))];
   if (query) { const label = document.createElement('span'); label.textContent = 'Search results'; crumbs.push(label); }
   else {
     let path = '';
@@ -120,6 +176,11 @@ function render() {
     }
   }
   $('breadcrumbs').replaceChildren(...crumbs);
+  if (!query) crumbs.at(-1).setAttribute('aria-current', 'location');
+  $('folder-back').disabled = historyIndex === 0 && !query;
+  $('folder-forward').disabled = historyIndex + 1 >= folderHistory.length;
+  $('folder-up').disabled = !folder && !query;
+  renderFolders();
   const rows = document.createDocumentFragment();
   for (const entry of visible) {
     const row = document.createElement('tr');
@@ -198,6 +259,7 @@ async function openArchive(file) {
     ++previewVersion;
     entries = result.entries; currentFile = file; archiveName = file.name;
     folder = ''; page = 0; selected.clear(); activeEntry = null;
+    folderHistory = ['']; historyIndex = 0; expandedFolders.clear(); expandedFolders.add(''); buildFolders();
     $('filter').value = '';
     $('archive-title').textContent = file.name;
     $('archive-info').textContent = `${countLabel(entries.length, 'file')} · ${size(file.size)} · ${result.version === -3 ? 'PC archive' : result.version === -2 ? 'Legacy PC archive' : result.version === -5 ? 'Android archive' : `Format ${result.version}`}`;
@@ -228,6 +290,17 @@ for (const target of [$('drop-zone'), $('archive-panel')]) {
   target.ondragleave = event => { if (!target.contains(event.relatedTarget)) target.classList.remove('is-dragging'); };
   target.ondrop = event => { event.preventDefault(); target.classList.remove('is-dragging'); if (ready && !busy) openArchive(event.dataTransfer.files[0]); };
 }
+$('folder-back').onclick = () => {
+  if ($('filter').value.trim()) navigate(folder, false);
+  else if (historyIndex > 0) navigate(folderHistory[--historyIndex], false);
+};
+$('folder-forward').onclick = () => { if (historyIndex + 1 < folderHistory.length) navigate(folderHistory[++historyIndex], false); };
+$('folder-up').onclick = () => navigate($('filter').value.trim() ? folder : folder.replace(/[^/]+\/$/, ''));
+$('toggle-folders').onclick = () => {
+  const expanded = $('toggle-folders').getAttribute('aria-expanded') !== 'true';
+  $('toggle-folders').setAttribute('aria-expanded', String(expanded));
+  $('folder-sidebar').classList.toggle('is-open', expanded);
+};
 $('filter').oninput = () => { page = 0; render(); };
 $('sort').onchange = () => { page = 0; render(); };
 $('clear-search').onclick = () => { $('filter').value = ''; render(); $('filter').focus(); };
