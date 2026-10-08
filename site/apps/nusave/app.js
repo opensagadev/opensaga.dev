@@ -100,7 +100,7 @@ function stage(field, value, control) {
   const original = storedValue(field, field.editor.value);
   const changed = storedValue(field, value);
   if (changed === original) edits.delete(field.name); else edits.set(field.name, { value: changed, display: value });
-  control.closest('tr').classList.toggle('is-edited', edits.has(field.name));
+  control.closest('.property-field').classList.toggle('is-edited', edits.has(field.name));
   controls();
   status(edits.size ? `${edits.size} changed ${edits.size === 1 ? 'value' : 'values'}. Apply or download to keep them.` : 'No pending changes.');
 }
@@ -176,17 +176,20 @@ async function render() {
   const result = await request('fields', { query, group: query ? '' : group, advanced: $('show-advanced').checked, offset: page * 50 });
   if (version !== renderVersion) return;
   fieldTotal = result.total; renderGroups(result.groups);
+  $('fields-heading').textContent = query ? 'Search results' : group || 'All values';
   const rows = document.createDocumentFragment();
   for (const [index, field] of result.fields.entries()) {
-    const row = document.createElement('tr'); row.classList.toggle('is-edited', edits.has(field.name));
-    const name = document.createElement('th'); name.scope = 'row';
-    const label = document.createElement('strong'); label.textContent = field.editor.label;
-    const key = document.createElement('code'); key.className = 'property-key'; key.textContent = field.name;
+    const fieldset = document.createElement('fieldset'); fieldset.className = 'property-field';
+    fieldset.classList.toggle('is-edited', edits.has(field.name));
+    fieldset.classList.toggle('property-field-wide', field.editor.input === 'hex');
+    const label = document.createElement('legend'); label.textContent = field.editor.label;
+    const help = document.createElement('details'); help.className = 'property-help';
+    const summary = document.createElement('summary'); summary.textContent = 'Details'; summary.setAttribute('aria-label', `About ${field.editor.label}`);
     const description = document.createElement('p'); description.className = 'caption'; description.id = `field-description-${index}`;
     description.textContent = field.description + (field.editor.input === 'hex' ? ' Edit as hexadecimal bytes.' : '');
-    name.append(label, key, description);
-    const value = document.createElement('td'); value.append(fieldControl(field, index));
-    row.append(name, value); rows.append(row);
+    const key = document.createElement('code'); key.className = 'property-key'; key.textContent = field.name;
+    help.append(summary, description, key);
+    fieldset.append(label, fieldControl(field, index), help); rows.append(fieldset);
   }
   $('save-fields').replaceChildren(rows); $('fields-empty').hidden = result.total > 0;
   $('save-results').textContent = `${result.total.toLocaleString()} ${result.total === 1 ? 'value' : 'values'}`;

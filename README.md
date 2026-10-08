@@ -28,7 +28,7 @@ and stops when leaving its preview. Downloading an individual entry is limited t
 accumulate decoded output in browser memory.
 
 nusave opens Windows PC and Android game saves and Android SuperOptions. Its
-summary and searchable, grouped field browser use the library's schema and interpreted
+summary and searchable, grouped form use the library's schema and interpreted
 values. Edit values directly with numeric inputs, toggles, dropdowns, text fields, and
 named flag checkboxes. The library provides control types, limits, and choices;
 invalid edits preserve the current save. Create new Android saves/options, reset
@@ -88,7 +88,10 @@ and `site-container site-container-wide` sections, as nudat does for its introdu
 and explorer. Workspaces use up to 1440px with outer gutters. Save fields and
 desktop archive lists flow with the page; section navigation and the archive
 preview stay alongside them while scrolling. The progress map has a near-screen-height
-viewport with a separate source filter sidebar. Existing `/play/` and `/progress/` links, including `?obb=`,
+viewport with a separate source filter sidebar. Shared tinted navigation areas,
+white content surfaces, and purple primary actions distinguish the tools without
+row-by-row borders. nusave groups labelled controls into a responsive form and
+keeps technical descriptions in expandable details. Existing `/play/` and `/progress/` links, including `?obb=`,
 retain their behavior.
 
 Add a manifest entry and a `site/apps/<id>/index.html` content fragment. The

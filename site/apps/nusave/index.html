@@ -14,8 +14,8 @@
   <div class="document-toolbar"><div class="report-tabs" role="tablist" aria-label="Save view"><button id="fields-tab" role="tab" aria-selected="true" aria-controls="fields-view">Values</button><button id="summary-tab" role="tab" aria-selected="false" aria-controls="summary-view" tabindex="-1">Summary</button></div><label class="search-field"><span aria-hidden="true">⌕</span><input id="save-filter" type="search" placeholder="Search values…" aria-label="Search save contents"></label><label class="checkbox-field"><input id="show-advanced" type="checkbox"> Show raw fields</label></div>
   <div class="document-layout">
     <nav id="save-groups" class="document-groups" aria-label="Save sections"></nav>
-    <div class="document-browser">
-      <div id="fields-view" class="document-scroll" role="tabpanel" aria-labelledby="fields-tab" tabindex="0"><form id="values-form"><table class="property-table"><thead><tr><th scope="col">Property</th><th scope="col">Value</th></tr></thead><tbody id="save-fields"></tbody></table></form><p id="fields-empty" class="empty-state" hidden>No matching properties.</p></div>
+    <div class="document-browser workspace-surface">
+      <div id="fields-view" class="document-scroll" role="tabpanel" aria-labelledby="fields-tab" tabindex="0"><header class="workspace-section-heading"><h2 id="fields-heading" class="workspace-section-title">Progress</h2><p class="caption">Edit values, then apply your changes or download the save.</p></header><form id="values-form"><div id="save-fields" class="property-grid"></div></form><p id="fields-empty" class="empty-state" hidden>No matching properties.</p></div>
       <div id="summary-view" class="document-scroll" role="tabpanel" aria-labelledby="summary-tab" tabindex="0" hidden></div>
       <footer class="list-footer"><span id="save-results"></span><div class="button-row"><button id="fields-previous" class="icon-button" aria-label="Previous properties" disabled>←</button><span id="fields-page">1 / 1</span><button id="fields-next" class="icon-button" aria-label="Next properties" disabled>→</button></div></footer>
     </div>
