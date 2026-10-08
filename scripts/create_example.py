@@ -2,6 +2,11 @@
 """Regenerate NuDat's small, synthetic example archive using a local NuDat CLI."""
 import argparse
 import json
+import io
+import math
+import struct
+import wave
+import zlib
 from pathlib import Path
 import subprocess
 import tempfile
@@ -21,6 +26,19 @@ with tempfile.TemporaryDirectory() as temporary:
         'data/sample.bin': bytes(range(256)),
         'data/empty.txt': '',
     }
+    # Browser-preview fixtures: a palette card and a quiet three-second tone.
+    def chunk(kind, data):
+        return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
+    colors = [(105, 64, 182), (76, 120, 168), (232, 180, 43), (89, 100, 116)]
+    pixels = b''.join(b'\x00' + b''.join(bytes(colors[x // 80]) for x in range(320)) for _ in range(180))
+    files['media/palette.png'] = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 320, 180, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(pixels)) + chunk(b'IEND', b'')
+    audio = io.BytesIO()
+    with wave.open(audio, 'wb') as output_audio:
+        output_audio.setnchannels(1)
+        output_audio.setsampwidth(2)
+        output_audio.setframerate(22050)
+        output_audio.writeframes(b''.join(struct.pack('<h', int(1800 * math.sin(2 * math.pi * 440 * i / 22050) * min(1, i / 2205, (66149 - i) / 2205))) for i in range(66150)))
+    files['media/tone.wav'] = audio.getvalue()
     for index in range(64):
         files[f'localization/messages_{index + 1:02}.txt'] = f'# Example message set {index + 1}\nwelcome=Welcome to OpenSaga\nopen=Open archive\nextract=Download file\n'
     for name, content in files.items():

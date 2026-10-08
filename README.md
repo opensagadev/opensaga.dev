@@ -13,14 +13,17 @@ builds their latest branches.
 | `/nudat/` | NuDat archive explorer | Rust library built to WASM and your local DAT/OBB |
 
 NuDat uses a wide, three-pane explorer with a folder sidebar, back/forward/up
-navigation, breadcrumbs, a file list, and a details panel. It searches all archive paths, previews
-text inline, verifies archives, and downloads individual files or ZIPs of a
+navigation, breadcrumbs, file sizes and compression in the list, and a roomy preview pane. It searches all archive paths, previews
+text with line numbers inline and in an expanded dialog, previews browser-supported
+images and audio, verifies archives, and downloads individual files or ZIPs of a
 folder, search results, or a selection. An included synthetic example makes
 the complete workflow available without original game assets. Long operations
 can be cancelled; an invalid replacement archive preserves the open archive. A Web Worker reads small
 Blob ranges through the library's generic reader API. Archives remain on your
-computer; large archives are never loaded in full into WASM memory. Downloading
-an individual entry is limited to the library's 512 MiB read limit; ZIP exports
+computer; large archives are never loaded in full into WASM memory. Text previews
+are limited to 1 MiB and 10,000 displayed lines; media previews
+are limited to 64 MiB and depend on browser codec support. Audio never autoplays
+and stops when leaving its preview. Downloading an individual entry is limited to the library's 512 MiB read limit; ZIP exports
 accumulate decoded output in browser memory.
 
 ## Build and preview

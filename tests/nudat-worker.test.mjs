@@ -26,7 +26,7 @@ function harness() {
 test('opens and previews an archive, preserving it after an invalid replacement', () => {
   const send = harness();
   const opened = send('open', { bytes: example });
-  assert.equal(opened.entries.length, 71);
+  assert.equal(opened.entries.length, 73);
   assert.equal(opened.version, -3);
   assert.match(send('open', { bytes: Buffer.from('invalid') }).error, /DAT|archive|fill|short/i);
   const preview = send('read', { path: 'levels/demo/scene.json' });
@@ -44,4 +44,18 @@ test('ZIP export preserves selected paths and decoded contents, including empty 
   assert.equal(unzipped['data/empty.txt'].length, 0);
   assert.deepEqual(unzipped['data/sample.bin'], Uint8Array.from({ length: 256 }, (_, index) => index));
   assert.equal(JSON.parse(new TextDecoder().decode(unzipped['levels/demo/scene.json'])).objects.length, 2);
+});
+
+test('reads image and audio previews as intact binary files', () => {
+  const send = harness();
+  send('open', { bytes: example });
+  const png = Buffer.from(send('read', { path: 'media/palette.png' }).bytes);
+  assert.equal(png.subarray(1, 4).toString(), 'PNG');
+  assert.equal(png.readUInt32BE(16), 320);
+  assert.equal(png.readUInt32BE(20), 180);
+  const wav = Buffer.from(send('read', { path: 'media/tone.wav' }).bytes);
+  assert.equal(wav.subarray(0, 4).toString(), 'RIFF');
+  assert.equal(wav.subarray(8, 12).toString(), 'WAVE');
+  assert.equal(wav.readUInt32LE(24), 22050);
+  assert.equal(wav.readUInt32LE(40), 66150 * 2);
 });

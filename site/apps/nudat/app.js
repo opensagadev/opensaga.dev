@@ -5,6 +5,9 @@ let entries = [], visible = [], page = 0, folder = '', archiveName = '', current
 let selected = new Set(), previewVersion = 0;
 let folderHistory = [''], historyIndex = 0, folderRoot = null;
 const expandedFolders = new Set(['']);
+let previewURL = null, previewText = '', previewKind = null;
+const imageTypes = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', ico: 'image/x-icon', svg: 'image/svg+xml' };
+const audioTypes = { mp3: 'audio/mpeg', wav: 'audio/wav', wave: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', flac: 'audio/flac' };
 const pending = new Map();
 const countLabel = (count, noun) => `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
 const status = (text, error = false) => {
@@ -139,7 +142,7 @@ function navigate(path, record = true) {
   expandedFolders.add(ancestor);
   for (const part of path.split('/').filter(Boolean)) { ancestor += part + '/'; expandedFolders.add(ancestor); }
   folder = path; page = 0; $('filter').value = '';
-  activeEntry = null; previewVersion++;
+  activeEntry = null; previewVersion++; clearPreview();
   $('detail-empty').hidden = false; $('detail-content').hidden = true;
   render();
   document.querySelector('.file-list-scroll').scrollTop = 0;
@@ -205,8 +208,9 @@ function render() {
     button.append(icon, label); nameCell.append(button);
     if (query && entry.path.includes('/')) { const path = document.createElement('small'); path.textContent = entry.path; path.className = 'file-parent'; nameCell.append(path); }
     const sizeCell = document.createElement('td'); sizeCell.textContent = entry.directory ? countLabel(entry.count, 'file') : size(entry.size);
-    const typeCell = document.createElement('td'); typeCell.textContent = entry.directory ? 'Folder' : (entry.name.includes('.') ? entry.name.split('.').at(-1).toUpperCase() : 'File');
-    row.append(selectCell, nameCell, sizeCell, typeCell); rows.append(row);
+    if (!entry.directory) sizeCell.title = `Stored size: ${size(entry.stored_size)}`;
+    const compressionCell = document.createElement('td'); compressionCell.textContent = entry.directory ? '—' : entry.compression;
+    row.append(selectCell, nameCell, sizeCell, compressionCell); rows.append(row);
   }
   $('entries').replaceChildren(rows);
   if (focusedPath) [...$('entries').querySelectorAll('[data-file-action]')].find(button => button.dataset.fileAction === focusedPath)?.focus({ preventScroll: true });
@@ -227,36 +231,92 @@ function updateSelection() {
   $('selection-count').textContent = `${countLabel(selected.size, 'file')} selected`;
   controls();
 }
+function clearPreview() {
+  const audio = $('audio-preview');
+  audio.onerror = null; audio.onloadedmetadata = null;
+  audio.pause();
+  if (audio.hasAttribute('src')) { audio.removeAttribute('src'); audio.load(); }
+  const image = $('image-preview');
+  image.onload = null; image.onerror = null; image.removeAttribute('src');
+  $('expanded-image').removeAttribute('src');
+  if (previewURL) URL.revokeObjectURL(previewURL);
+  previewURL = null; previewText = ''; previewKind = null;
+  for (const id of ['inline-preview', 'media-preview', 'image-preview', 'audio-preview', 'expand-preview']) $(id).hidden = true;
+  $('inline-preview').replaceChildren(); $('preview-text').replaceChildren();
+  if ($('preview-dialog').open) $('preview-dialog').close();
+}
+function renderTextPreview(target, text) {
+  const lines = text.split(/\r\n|\n|\r/);
+  const fragment = document.createDocumentFragment();
+  // Bound the number of DOM nodes even for pathological newline-only files.
+  for (const [index, line] of lines.slice(0, 10000).entries()) {
+    const row = document.createElement('span'); row.className = 'code-line';
+    const number = document.createElement('span'); number.className = 'line-number';
+    number.textContent = index + 1; number.setAttribute('aria-hidden', 'true');
+    const content = document.createElement('span'); content.className = 'line-text'; content.textContent = line;
+    row.append(number, content); fragment.append(row);
+  }
+  target.replaceChildren(fragment); target.scrollTop = 0;
+  return lines.length > 10000;
+}
 async function inspect(entry) {
   if (busy) return;
   activeEntry = entry;
   const version = ++previewVersion;
+  clearPreview();
   $('detail-empty').hidden = true; $('detail-content').hidden = false;
   $('detail-name').textContent = entry.name;
   $('detail-path').textContent = entry.path;
-  $('detail-size').textContent = size(entry.size);
-  $('detail-stored').textContent = size(entry.stored_size);
-  $('detail-compression').textContent = entry.compression;
-  $('inline-preview').hidden = true; $('expand-preview').hidden = true;
-  $('preview-note').textContent = 'Download this file to open it in its application.';
+  $('preview-note').textContent = 'No preview is available for this file type. Use Download file to open it in its application.';
   render();
-  if (matchMedia('(max-width: 799px)').matches) $('file-details').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
-  if (!/\.(txt|scp|csv|xml|json|ini|cfg|lua|h|c|cpp|log|md|yaml|yml)$/i.test(entry.path)) return;
-  if (entry.size > 1024 * 1024) { $('preview-note').textContent = 'This file is larger than the 1 MiB preview limit. Download it to read the full contents.'; return; }
+  if (matchMedia('(max-width: 799px)').matches) $('file-preview').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+  const extension = entry.path.split('.').at(-1).toLowerCase();
+  const imageType = Object.hasOwn(imageTypes, extension) ? imageTypes[extension] : null;
+  const audioType = Object.hasOwn(audioTypes, extension) ? audioTypes[extension] : null;
+  const isText = /\.(txt|scp|csv|xml|json|ini|cfg|lua|h|c|cpp|log|md|yaml|yml)$/i.test(entry.path);
+  if (!isText && !imageType && !audioType) return;
+  const limit = isText ? 1 : 64;
+  if (entry.size > limit * 1024 * 1024) { $('preview-note').textContent = `This file exceeds the ${limit} MiB ${isText ? 'text' : 'media'} preview limit. Download it to open the full file.`; return; }
   $('preview-note').textContent = 'Reading preview…';
   try {
     const { bytes } = await request('read', { path: entry.path });
     if (version !== previewVersion) return;
-    $('inline-preview').textContent = new TextDecoder().decode(bytes);
-    $('inline-preview').hidden = false; $('expand-preview').hidden = false;
-    $('preview-note').textContent = entry.size ? 'Text preview' : 'This file is empty.';
+    if (isText) {
+      previewKind = 'text'; previewText = new TextDecoder().decode(bytes);
+      const truncated = renderTextPreview($('inline-preview'), previewText);
+      $('inline-preview').hidden = false; $('expand-preview').hidden = false;
+      $('preview-note').textContent = truncated ? 'Showing the first 10,000 lines. Download the file to read all lines.' : entry.size ? 'Text preview' : 'This file is empty.';
+      return;
+    }
+    previewKind = imageType ? 'image' : 'audio';
+    previewURL = URL.createObjectURL(new Blob([bytes], { type: imageType || audioType }));
+    const media = $(imageType ? 'image-preview' : 'audio-preview');
+    media.onerror = () => {
+      if (version !== previewVersion) return;
+      $('media-preview').hidden = true; $('expand-preview').hidden = true;
+      $('preview-note').textContent = `This browser cannot preview this ${previewKind} file. It may be damaged or use an unsupported format. Download it to open it in another application.`;
+    };
+    if (imageType) {
+      media.alt = entry.name;
+      media.onload = () => {
+        if (version !== previewVersion) return;
+        $('preview-note').textContent = `${media.naturalWidth.toLocaleString()} × ${media.naturalHeight.toLocaleString()} pixels`;
+        $('expand-preview').hidden = false;
+      };
+    } else {
+      media.onloadedmetadata = () => {
+        if (version === previewVersion) $('preview-note').textContent = 'Audio preview · Press play to listen';
+      };
+    }
+    media.src = previewURL; media.hidden = false; $('media-preview').hidden = false;
+    $('preview-note').textContent = `Loading ${previewKind} preview…`;
   } catch (error) { if (version === previewVersion) $('preview-note').textContent = error.message; }
 }
 async function openArchive(file) {
   if (!file) return;
   await operation(`Opening ${file.name}…`, async () => {
     const result = await request('open', { file });
-    ++previewVersion;
+    ++previewVersion; clearPreview();
     entries = result.entries; currentFile = file; archiveName = file.name;
     folder = ''; page = 0; selected.clear(); activeEntry = null;
     folderHistory = ['']; historyIndex = 0; expandedFolders.clear(); expandedFolders.add(''); buildFolders();
@@ -318,9 +378,15 @@ $('download-file').onclick = () => {
   });
 };
 $('verify').onclick = () => operation('Checking archive contents…', async () => { await request('verify'); status(`All ${entries.length.toLocaleString()} files verified successfully.`); });
-$('expand-preview').onclick = () => { $('preview-title').textContent = activeEntry.path; $('preview-text').textContent = $('inline-preview').textContent; $('preview-dialog').showModal(); };
+$('expand-preview').onclick = () => {
+  $('preview-title').textContent = activeEntry.path;
+  $('preview-text').hidden = previewKind !== 'text'; $('expanded-image').hidden = previewKind !== 'image';
+  if (previewKind === 'text') renderTextPreview($('preview-text'), previewText);
+  else if (previewKind === 'image') { $('expanded-image').src = previewURL; $('expanded-image').alt = activeEntry.name; }
+  $('preview-dialog').showModal();
+};
 $('cancel-operation').onclick = () => {
-  generation++; previewVersion++; worker.terminate();
+  generation++; previewVersion++; clearPreview(); worker.terminate();
   for (const request of pending.values()) request.reject(new Error('Operation cancelled.'));
   pending.clear(); busy = false;
   const file = currentFile;
