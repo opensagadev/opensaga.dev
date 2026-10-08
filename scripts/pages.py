@@ -273,4 +273,5 @@ def generate_site(report_path, output_path, row_bytes, cell_bytes):
         for asset in (SITE_DIRECTORY / "apps" / app["id"]).glob("*.js"):
             shutil.copyfile(asset, directory / asset.name)
     (output_path.parent / ".nojekyll").touch()
+    shutil.copyfile(SITE_DIRECTORY / "apps/nudat/example.dat", output_path.parent / "nudat/example.dat")
     return payload

@@ -34,12 +34,14 @@
         <!--__HEADER__-->
         <main id="progress" class="site-content">
             <section class="site-container progress-overview" aria-labelledby="progress-title">
-                <h1 id="progress-title" class="site-title">Decompilation Progress</h1>
+                <p class="eyebrow">Saga · project status</p>
+                <h1 id="progress-title" class="site-title">Decompilation progress</h1>
+                <p class="site-intro">From original machine code to an open, portable game. Explore what matches and what remains.</p>
                 <dl class="progress-metrics">
-                    <div><dt>Overall progress</dt><dd id="fuzzy-stat">-</dd></div>
-                    <div><dt>Exact code</dt><dd id="code-stat">-</dd></div>
-                    <div><dt>Matched functions</dt><dd id="function-stat">-</dd></div>
-                    <div><dt>Build units</dt><dd id="unit-stat">-</dd></div>
+                    <div><dt>Code similarity</dt><dd id="fuzzy-stat">-</dd><small>Weighted instruction match</small></div>
+                    <div><dt>Exact code</dt><dd id="code-stat">-</dd><small>Byte-for-byte matching code</small></div>
+                    <div><dt>Matched functions</dt><dd id="function-stat">-</dd><small>Fully matching / total</small></div>
+                    <div><dt>Build units</dt><dd id="unit-stat">-</dd><small>Source compilation units</small></div>
                 </dl>
                 <progress id="overall-progress" class="site-progress" max="100" value="0"
                     aria-label="Overall decompilation progress"></progress>
@@ -55,11 +57,14 @@
                             aria-controls="treemap-panel">Function sizes</button>
                     </div>
                     <div class="report-tools">
-                        <p id="report-hint">Scroll to zoom. Drag to pan.</p>
+                        <p id="report-hint">Ctrl + scroll to zoom · drag to pan</p>
+                        <div class="report-actions"><label class="label-toggle"><input id="show-labels" type="checkbox">Labels</label>
                         <div id="map-controls" class="report-actions">
+                            <button id="zoom-out" class="report-control" aria-label="Zoom out" type="button">−</button>
                             <span id="zoom-status" aria-live="polite">1&times;</span>
+                            <button id="zoom-in" class="report-control" aria-label="Zoom in" type="button">+</button>
                             <button id="reset" class="report-control" type="button">Reset</button>
-                        </div>
+                        </div></div>
                     </div>
                     <div id="address-panel" class="report-viewport" role="tabpanel"
                         aria-labelledby="address-tab">
@@ -90,14 +95,16 @@
                             <button id="hide-all-units" class="report-control" type="button">None</button>
                         </div>
                     </div>
+                    <label class="search-field report-search"><span aria-hidden="true">⌕</span><input id="unit-search" type="search" placeholder="Find a source file…" aria-label="Find a source file"></label>
                     <div id="unit-tree"></div>
                 </aside>
 
                 <div class="report-legend" aria-label="Map legend">
-                    <span><i class="match-gradient" aria-hidden="true"></i>0&ndash;100% match</span>
+                    <span><i class="match-gradient" aria-hidden="true"></i>0% → 100% match</span>
                     <span><i class="legend-ambiguous" aria-hidden="true"></i>Ambiguous</span>
                     <span><i class="legend-unscored" aria-hidden="true"></i>Not scored</span>
                     <span><i class="legend-boundary" aria-hidden="true"></i>File boundary</span>
+                    <span class="map-note">Hover or tap a block for details</span>
                 </div>
               </div>
             </div>
@@ -132,7 +139,8 @@
         const treemapContext = treemapCanvas.getContext("2d");
         const treemapHover = document.getElementById("treemap-hover");
         const tooltip = document.getElementById("tooltip");
-        const width = 1200;
+        const width = Math.max(720, Math.min(1200,
+            mapStack.node().getBoundingClientRect().width || 1200));
         const left = 118;
         const right = 18;
         const plotWidth = width - left - right;
@@ -258,10 +266,13 @@
         let functionSegments = [];
         let outlineSegments = [];
 
+        const matchColor = d3.scaleSequential(d3.interpolateRdYlGn)
+            .domain([0, 100]).clamp(true);
+
         function fillColor(f) {
-            if (f.x) return "#7651a8";
+            if (f.x) return "#e8b42b";
             if (f.p === null) return "var(--row)";
-            return d3.interpolateRdYlGn(f.p / 100);
+            return matchColor(f.p);
         }
         function unitIsVisible(unit) { return unit < 0 || unitVisibility[unit] === 1; }
         function functionIsVisible(f) { return unitIsVisible(f.u); }
@@ -438,8 +449,8 @@
         }
         function moveTooltip(event) {
             const pad = 12;
-            tooltip.style.left = `${Math.min(event.clientX + 14, innerWidth - tooltipBox.width - pad)}px`;
-            tooltip.style.top = `${Math.min(event.clientY + 14, innerHeight - tooltipBox.height - pad)}px`;
+            tooltip.style.left = `${Math.max(pad, Math.min(event.clientX + 14, innerWidth - tooltipBox.width - pad))}px`;
+            tooltip.style.top = `${Math.max(pad, Math.min(event.clientY + 14, innerHeight - tooltipBox.height - pad))}px`;
         }
         function hideTooltip() {
             tooltip.style.display = "none";
@@ -486,12 +497,12 @@
                     const cellWidth = Math.max(.5, cell.w * currentTransform.k + .25);
                     if (cell.scored) {
                         context.globalAlpha = cell.scored;
-                        context.fillStyle = d3.interpolateRdYlGn(cell.p / 100);
+                        context.fillStyle = matchColor(cell.p);
                         context.fillRect(x, y, cellWidth, rowHeight);
                     }
                     if (cell.ambiguous) {
                         context.globalAlpha = cell.ambiguous;
-                        context.fillStyle = "#7651a8";
+                        context.fillStyle = "#e8b42b";
                         context.fillRect(x, y, cellWidth, rowHeight);
                     }
                 });
@@ -521,10 +532,11 @@
                         Math.max(.12, segment.w * currentTransform.k), rowHeight);
                 });
             });
-            context.globalAlpha = 1;
+            context.globalAlpha = currentTransform.k < 4 ? .18 : .4;
             context.strokeStyle = resolveThemeColor("--outline");
-            context.lineWidth = .8;
+            context.lineWidth = .6;
             context.stroke();
+            context.globalAlpha = 1;
         }
 
         function resizeCanvas() {
@@ -644,9 +656,9 @@
         }
 
         function treemapFill(f) {
-            if (f.x) return "#7651a8";
+            if (f.x) return "#e8b42b";
             if (f.p === null) return resolveThemeColor("--row");
-            return d3.interpolateRdYlGn(f.p / 100);
+            return matchColor(f.p);
         }
 
         function indexTreemapLeaves(width, height) {
@@ -737,7 +749,7 @@
                 const cellHeight = Math.max(0, leaf.y1 - leaf.y0);
                 treemapContext.fillStyle = treemapFill(f);
                 treemapContext.fillRect(leaf.x0, leaf.y0, cellWidth, cellHeight);
-                if (cellHeight < 13) return;
+                if (!document.getElementById("show-labels").checked || cellHeight < 18 || cellWidth < 70) return;
                 const label = fittedLabelText(f.n, cellWidth);
                 if (label === null) return;
                 const x = (leaf.x0 + leaf.x1) / 2;
@@ -815,7 +827,7 @@
             treemapPanel.hidden = showAddress;
             mapControls.hidden = !showAddress;
             document.getElementById("report-hint").textContent = showAddress ?
-                "Scroll to zoom. Drag to pan." : "Hover over a function for details.";
+                "Ctrl + scroll to zoom · drag to pan" : "Hover over a function for details.";
             addressPanel.setAttribute("aria-hidden", String(!showAddress));
             treemapPanel.setAttribute("aria-hidden", String(showAddress));
             hoveredTreemapLeaf = null;
@@ -852,6 +864,10 @@
         }
 
         function renderLabels(transform, localX) {
+            if (!document.getElementById("show-labels").checked) {
+                labelLayer.selectAll("text").remove();
+                return;
+            }
             labelLayer.attr("transform", `translate(${left},${bitmapY})`);
             renderedLabelScale = transform.k;
             renderedLabelLocalX = localX;
@@ -962,7 +978,7 @@
         interaction.on("pointermove", event => {
             lastPointer = { clientX: event.clientX, clientY: event.clientY };
             updateHover(lastPointer);
-        }).on("pointerleave", () => {
+        }).on("click", event => updateHover(event)).on("pointerleave", () => {
             lastPointer = null;
             hideTooltip();
         });
@@ -1091,6 +1107,25 @@
         unitTreeRoot.className = "unit-tree-root";
         document.getElementById("unit-tree").append(unitTreeRoot);
         renderUnitTree(buildUnitTree(), unitTreeRoot);
+        document.getElementById("unit-search").addEventListener("input", event => {
+            const query = event.target.value.trim().toLowerCase();
+            treeCheckboxes.length = 0;
+            unitTreeRoot.replaceChildren();
+            if (!query) renderUnitTree(buildUnitTree(), unitTreeRoot);
+            else data.units.forEach((name, id) => {
+                if (!name.toLowerCase().includes(query)) return;
+                const item = document.createElement("li");
+                item.append(createTreeRow(cleanUnitName(name), [id], false, name).row);
+                unitTreeRoot.append(item);
+            });
+            if (!unitTreeRoot.children.length) {
+                const empty = document.createElement("li");
+                empty.className = "empty-state";
+                empty.textContent = "No source files found.";
+                unitTreeRoot.append(empty);
+            }
+            updateUnitControls();
+        });
         updateUnitControls();
         document.getElementById("show-all-units").addEventListener("click", () => {
             unitVisibility.fill(1);
@@ -1103,6 +1138,7 @@
 
         const zoomStatus = document.getElementById("zoom-status");
         const zoom = d3.zoom().scaleExtent([1, 2048])
+            .filter(event => !event.button && (event.type !== "wheel" || event.ctrlKey || event.metaKey))
             .extent([[left, bitmapY], [left + plotWidth, bitmapY + bitmapHeight]])
             .translateExtent([[left, bitmapY],
             [left + plotWidth, bitmapY + bitmapHeight]])
@@ -1139,6 +1175,15 @@
         svg.call(zoom).on("dblclick.zoom", null);
         document.getElementById("reset").addEventListener("click", () =>
             svg.transition().duration(250).call(zoom.transform, d3.zoomIdentity));
+
+        document.getElementById("zoom-in").addEventListener("click", () =>
+            svg.transition().duration(180).call(zoom.scaleBy, 2));
+        document.getElementById("zoom-out").addEventListener("click", () =>
+            svg.transition().duration(180).call(zoom.scaleBy, .5));
+        document.getElementById("show-labels").addEventListener("change", () => {
+            renderLabels(currentTransform, currentLocalX);
+            scheduleTreemapRender();
+        });
 
         let layoutScheduled = false;
         function scheduleMapLayout() {

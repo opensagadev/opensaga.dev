@@ -12,8 +12,11 @@ builds their latest branches.
 | `/play/` | Experimental Saga WebAssembly player | Bazel build and your own Android OBB |
 | `/nudat/` | NuDat archive explorer | Rust library built to WASM and your local DAT/OBB |
 
-NuDat lists/searches entries, previews text, verifies archives, downloads
-individual files, and exports filtered files as ZIP. A Web Worker reads small
+NuDat browses folders with breadcrumbs, searches all archive paths, previews
+text inline, verifies archives, and downloads individual files or ZIPs of a
+folder, search results, or a selection. An included synthetic example makes
+the complete workflow available without original game assets. Long operations
+can be cancelled; an invalid replacement archive preserves the open archive. A Web Worker reads small
 Blob ranges through the library's generic reader API. Archives remain on your
 computer; large archives are never loaded in full into WASM memory. Downloading
 an individual entry is limited to the library's 512 MiB read limit; ZIP exports
@@ -47,7 +50,10 @@ checkout locally: `python3 scripts/build.py --saga ../saga`.
 `site/shared/` owns the shell, navigation, theme, typography, forms, buttons,
 tables, dialogs, and responsive layouts. Tailwind scans all templates and JS
 under `site/`; the build emits one stylesheet used by every application.
-There are no page-local stylesheets. `site/apps.json` supplies navigation and
+The theme uses the logo’s violet for actions and selection, blue for secondary
+data, gold for archive folders and ambiguity, and slate for surfaces. It follows
+the system light/dark preference. Navigation, panels, buttons, inputs, tables,
+and focus states all use these shared tokens. There are no page-local stylesheets. `site/apps.json` supplies navigation and
 application titles. Existing `/play/` and `/progress/` links, including `?obb=`,
 retain their behavior.
 
@@ -63,6 +69,15 @@ shared header, head, and footer.
 validation belong to NuDat. Its dependency disables NuDat's CLI feature.
 The library handles `Read`, `Seek`, and `Write` sources, while the native CLI
 owns files, directories, temporary staging, and thread scheduling.
+
+The progress explorer keeps its summary at the reading width and its map in
+a wider workspace around 90% of the desktop viewport height. Scroll normally
+to move down the page; use Ctrl/Cmd + scroll or the zoom buttons to inspect the
+map. Labels are optional, and source files can be searched in the sidebar.
+
+Regenerate the synthetic NuDat example with
+`python3 scripts/create_example.py --nudat /path/to/nudat`. The checked-in
+archive contains only generated demonstration files.
 
 ## Updating source versions
 

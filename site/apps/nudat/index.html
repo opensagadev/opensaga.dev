@@ -1,35 +1,29 @@
-<section class="site-section" aria-labelledby="nudat-title">
-  <h1 id="nudat-title" class="site-title">NuDat archive explorer</h1>
-  <p class="site-intro">Inspect Traveller's Tales DAT and OBB archives, preview text, and extract files. Your archive stays on your computer.</p>
-  <label class="field-label" for="archive-file">Open a DAT or OBB archive</label>
-  <input id="archive-file" type="file" accept=".dat,.obb" disabled>
-  <p id="status" class="status-message" role="status" aria-live="polite">Loading NuDat…</p>
+<section class="app-heading" aria-labelledby="nudat-title">
+  <div><p class="eyebrow">NuDat · archive tools</p><h1 id="nudat-title" class="site-title">Archive explorer</h1>
+  <p class="site-intro">Browse, inspect, and extract DAT and OBB files. Everything happens on your device.</p></div>
+  <span class="badge"><span class="status-dot"></span> Local processing</span>
 </section>
-<section id="archive-panel" class="site-section" aria-labelledby="archive-title" hidden>
-  <h2 id="archive-title" class="site-subtitle">Archive contents</h2>
-  <p id="archive-info"></p>
-  <label class="field-label" for="filter">Search archive paths</label>
-  <input id="filter" type="search" placeholder="e.g. Levels/ or .txt" autocomplete="off">
-  <div class="site-actions">
-    <button id="verify" type="button">Verify archive</button>
-    <button id="download-all" type="button">Download filtered files as ZIP</button>
-  </div>
-  <p id="results" class="status-message"></p>
-  <div class="table-scroll">
-    <table>
-      <thead><tr><th scope="col">Path</th><th scope="col">Size</th><th scope="col">Encoding</th><th scope="col">Actions</th></tr></thead>
-      <tbody id="entries"></tbody>
-    </table>
-  </div>
-  <div class="site-actions">
-    <button id="previous" type="button">Previous</button>
-    <span id="page-info"></span>
-    <button id="next" type="button">Next</button>
+<input id="archive-file" class="sr-only" type="file" accept=".dat,.obb" aria-label="Open a DAT or OBB archive" disabled>
+<section id="drop-zone" class="drop-zone" aria-labelledby="open-title">
+  <div class="archive-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+  <h2 id="open-title">Open an archive</h2>
+  <p>Drop a <strong>.dat</strong> or <strong>.obb</strong> file here to explore its contents.</p>
+  <div class="button-row"><button id="choose-archive" class="primary-button" disabled>Choose archive</button><button id="open-demo" class="secondary-button" disabled>Explore an example</button></div>
+  <p class="caption">Supports PC and Android archives · No uploads or account needed</p>
+</section>
+<div class="operation-status"><p id="status" class="status-message" role="status" aria-live="polite">Starting NuDat…</p><button id="cancel-operation" class="text-button" hidden>Cancel operation</button></div>
+<section id="archive-panel" class="archive-workspace panel" aria-labelledby="archive-title" hidden>
+  <header class="workspace-header"><div class="truncate"><p class="eyebrow">Open archive</p><h2 id="archive-title" class="site-subtitle"></h2><p id="archive-info" class="caption"></p></div><div class="button-row"><button id="verify" class="secondary-button">Verify files</button><button id="change-archive" class="secondary-button">Open another</button></div></header>
+  <div class="archive-toolbar"><label class="search-field"><span aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="Search all files…" aria-label="Search all archive files" autocomplete="off"></label><label class="sort-field">Sort <select id="sort" aria-label="Sort files"><option value="name">Name</option><option value="size">Largest first</option></select></label><button id="download-all" class="primary-button">Download folder</button></div>
+  <div id="selection-bar" class="selection-bar" hidden><span id="selection-count"></span><button id="clear-selection" class="text-button">Clear selection</button><button id="download-selected" class="primary-button">Download selected</button></div>
+  <div class="archive-layout">
+    <div class="archive-browser">
+      <nav id="breadcrumbs" class="breadcrumbs" aria-label="Archive folders"></nav>
+      <div class="file-list-scroll"><table class="file-table"><thead><tr><th class="select-cell"><input id="select-all" type="checkbox" aria-label="Select visible files"></th><th scope="col">Name</th><th scope="col">Size</th><th scope="col">Type</th></tr></thead><tbody id="entries"></tbody></table><div id="no-results" class="empty-state" hidden><strong>No files found</strong><p>Try a different name or file extension.</p><button id="clear-search" class="secondary-button">Clear search</button></div></div>
+      <footer class="list-footer"><span id="results"></span><div class="button-row"><button id="previous" class="icon-button" aria-label="Previous page">←</button><span id="page-info"></span><button id="next" class="icon-button" aria-label="Next page">→</button></div></footer>
+    </div>
+    <aside id="file-details" class="file-details" aria-label="File details"><div id="detail-empty" class="empty-state"><span class="file-symbol" aria-hidden="true">≡</span><strong>A closer look</strong><p>Select a file to see its details, preview its contents, or download it.</p></div><div id="detail-content" hidden><p class="eyebrow">File details</p><h3 id="detail-name"></h3><p id="detail-path" class="caption"></p><dl class="detail-grid"><dt>Size</dt><dd id="detail-size"></dd><dt>Stored size</dt><dd id="detail-stored"></dd><dt>Compression</dt><dd id="detail-compression"></dd></dl><button id="download-file" class="primary-button">Download file</button><div class="preview-heading"><h4>Preview</h4><button id="expand-preview" class="text-button" hidden>Expand ↗</button></div><p id="preview-note" class="caption"></p><pre id="inline-preview" tabindex="0" hidden></pre></div></aside>
   </div>
 </section>
-<dialog id="preview-dialog">
-  <h2 id="preview-title" class="site-subtitle">File preview</h2>
-  <pre id="preview-text"></pre>
-  <form method="dialog"><button>Close</button></form>
-</dialog>
+<dialog id="preview-dialog"><div class="dialog-heading"><h2 id="preview-title" class="site-subtitle">File preview</h2><form method="dialog"><button class="icon-button" aria-label="Close preview">×</button></form></div><pre id="preview-text" tabindex="0"></pre></dialog>
 <script type="module" src="./app.js"></script>

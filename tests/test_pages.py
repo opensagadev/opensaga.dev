@@ -125,8 +125,10 @@ class PagesTest(unittest.TestCase):
                 self.assertNotIn("<!--__", html)
                 self.assertNotIn("__ROOT__", html)
                 elements = PageElements(html).elements
-                self.assertEqual(sum(tag == "nav" for tag, _ in elements), 1)
-                self.assertEqual(sum(tag == "footer" for tag, _ in elements), 1)
+                self.assertEqual(sum(tag == "nav" and attrs.get("aria-label") == "Main navigation"
+                                     for tag, attrs in elements), 1)
+                self.assertEqual(sum(tag == "footer" and attrs.get("class") == "site-footer"
+                                     for tag, attrs in elements), 1)
                 stylesheets = [attrs["href"] for tag, attrs in elements
                                if tag == "link" and attrs.get("rel") == "stylesheet"]
                 expected_css = "./site.css" if name == "index.html" else "../site.css"

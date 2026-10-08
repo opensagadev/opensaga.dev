@@ -8,13 +8,14 @@ self.onmessage = ({ data }) => {
   const { id, command } = data;
   try {
     if (command === 'open') {
-      archive?.free();
-      archive = undefined;
       const file = data.file;
       const reader = new FileReaderSync();
-      archive = new WebArchive(file.size, (offset, length) =>
+      const next = new WebArchive(file.size, (offset, length) =>
         new Uint8Array(reader.readAsArrayBuffer(file.slice(offset, offset + length))));
-      self.postMessage({ id, entries: archive.entries(), version: archive.version() });
+      const entries = next.entries();
+      archive?.free();
+      archive = next;
+      self.postMessage({ id, entries, version: archive.version() });
     } else if (command === 'read') {
       const bytes = archive.read(data.path);
       self.postMessage({ id, bytes }, [bytes.buffer]);
