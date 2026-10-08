@@ -30,9 +30,11 @@ and stops when leaving its preview. Downloading an individual entry is limited t
 accumulate decoded output in browser memory.
 
 nusave opens Windows PC and Android game saves and Android SuperOptions. Its
-summary and searchable, grouped form use the library's schema and interpreted
-values. Edit values directly with numeric inputs, toggles, dropdowns, text fields, and
-named flag checkboxes. The library provides control types, limits, and choices;
+summary and searchable tree use the library's schema and interpreted
+values. Sections contain levels, characters, areas, and missions, with minikits
+nested under their level. Selecting an item shows its controls; draft edits
+are retained when moving between branches. Edit values directly with numeric
+inputs, toggles, dropdowns, text fields, and named flag checkboxes. The library provides control types, limits, and choices;
 invalid edits preserve the current save. Create new Android saves/options, reset
 edits, and download saves with repaired derived fields or
 preserve their exact stored bytes. The application works in a Web Worker with a
@@ -151,18 +153,19 @@ build prevents a later site-only push from rolling back an application.
 `.github/workflows/pages.yml` builds all WASM applications, compiles shared
 styles, assembles all pages, and validates the result on main pushes and pull
 requests. Main pushes/manual dispatches upload `dist/` as a Pages artifact;
-pull requests only build and test. Deployment stays disabled until the repository
-Actions variable `PAGES_DEPLOY_ENABLED` is set to `true`.
+pull requests only build and test. This repository publishes **https://opensaga.dev/**
+using GitHub Actions. The repository Actions variable `PAGES_DEPLOY_ENABLED` is
+set to `true`; setting it to `false` pauses publishing while retaining build checks.
 
 Saga, nudat, and nusave each have a `notify-pages.yml` workflow that dispatches this
 repository's `pages.yml` on pushes to `main` (and can be run manually).
-Set the Actions secret `OPENSAGA_PAGES_TOKEN` in all three source repositories, or
-as an organization secret available to all three. Use a fine-grained personal access
-token restricted to `opensagadev/opensaga.dev` with **Actions: read and write**;
-approve it for the organization if required. The source repositories' automatic
-`GITHUB_TOKEN` cannot dispatch workflows in another repository. Until this
-secret is configured, the notification steps skip with a warning. Saga's
-notification workflow becomes active after the migration PR is merged.
+The Actions secret `OPENSAGA_PAGES_TOKEN` is configured in all three source
+repositories. It uses a fine-grained personal access token restricted to
+`opensagadev/opensaga.dev` with **Actions: read and write**. When rotating it,
+update the secret in all three repositories and approve the token for the
+organization if required. The source repositories' automatic `GITHUB_TOKEN`
+cannot dispatch workflows in another repository. If the dedicated secret is
+missing, the notification step skips with a warning.
 
 To rebuild manually with the latest application sources:
 
@@ -170,13 +173,12 @@ To rebuild manually with the latest application sources:
 gh workflow run pages.yml --repo opensagadev/opensaga.dev --ref main
 ```
 
-When ready to cut over, configure this repository's Pages source as **GitHub
-Actions**, move the **opensaga.dev** custom domain from Saga's Pages settings,
-and point DNS at the opensagadev Pages host. Then set `PAGES_DEPLOY_ENABLED` to
-`true` and dispatch the build. Until then, leave the old domain and deployment
-in place and the Saga migration PR unmerged.
-`CNAME` alone does not configure the domain for an Actions deployment; see
-[GitHub's Pages configuration guidance](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
+GitHub Pages is configured on this repository with **GitHub Actions** as its
+source and **opensaga.dev** as its custom domain. The Saga migration removes
+its old Pages deployment; source repositories only notify this repository.
+The apex domain uses GitHub Pages IP addresses; `www` redirects to the apex
+domain over HTTPS. `CNAME` in the build artifact alone does not configure
+an Actions deployment; the repository's Pages settings own the domain.
 
 Saga's threaded player has a `/play/`-scoped isolation service worker; other
 applications use normal browser isolation. Remote OBB sources must permit
@@ -189,5 +191,3 @@ to James Jessiman's [LDraw 6141](https://library.ldraw.org/parts/10969),
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Discord and GitHub
 icons come from Simple Icons 16.31.0 (CC0). D3 (ISC) and fflate (MIT) are bundled
 locally from their pinned npm packages. Copyrighted game assets are not included.
-
-The nusave editor organizes save values in a searchable tree of sections, levels, characters, areas, and missions. Select an item to edit its values; minikits are nested under their level. Draft edits are retained when moving between branches.
