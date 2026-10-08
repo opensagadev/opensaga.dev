@@ -17,7 +17,7 @@ def run(*args, cwd=ROOT):
 
 def assemble(saga: Path, output: Path, *, skip_wasm=False):
     output.mkdir(parents=True, exist_ok=True)
-    generate_site(saga / 'matching.json', output / 'index.html', 256 * 512, 512)
+    generate_site(saga / 'matching.json', output / 'index.html', 128 * 512, 512)
     assets = output / 'assets'
     assets.mkdir(exist_ok=True)
     shutil.copyfile(ROOT / 'node_modules/d3/dist/d3.min.js', assets / 'd3.min.js')

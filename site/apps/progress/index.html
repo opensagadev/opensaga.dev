@@ -45,7 +45,8 @@
                     aria-label="Overall decompilation progress"></progress>
             </section>
 
-            <div class="report-layout">
+            <div class="site-container site-container-wide">
+              <div class="report-layout">
                 <section class="report-map" aria-label="Binary explorer">
                     <div class="report-tabs" role="tablist" aria-label="Map views">
                         <button id="address-tab" type="button" role="tab" aria-selected="true"
@@ -98,6 +99,7 @@
                     <span><i class="legend-unscored" aria-hidden="true"></i>Not scored</span>
                     <span><i class="legend-boundary" aria-hidden="true"></i>File boundary</span>
                 </div>
+              </div>
             </div>
         </main>
 
@@ -137,8 +139,8 @@
         const sectionY = 34;
         const sectionHeight = 48;
         const bitmapY = 126;
-        const minimumRowHeight = 22;
-        const minimumRowBytes = 0x10 * 1024;
+        const minimumRowHeight = 14;
+        const minimumRowBytes = 0x8 * 1024;
         const bottomPadding = 36;
         let rowBytes = data.rowBytes;
         let rowCount = data.rows;
@@ -227,7 +229,9 @@
                 .attr("width", plotWidth).attr("height", rowHeight);
             rows.selectAll("text").data(d3.range(rowCount)).join("text")
                 .attr("class", "row-label").attr("text-anchor", "end")
-                .attr("x", left - 8).attr("y", d => bitmapY + d * rowHeight + 15)
+                .attr("dominant-baseline", "middle")
+                .attr("x", left - 8)
+                .attr("y", d => bitmapY + (d + .5) * rowHeight)
                 .text(d => `0x${(data.textStart + d * rowBytes).toString(16).padStart(8, "0")}`);
         }
         renderRows();

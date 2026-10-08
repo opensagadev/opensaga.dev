@@ -278,15 +278,23 @@ button:disabled, input:disabled {
     background: var(--accent);
 }
 
+.site-container-wide {
+    max-width: 1440px;
+}
+
 .progress-overview {
-    margin-bottom: 32px;
+    margin-bottom: 24px;
+}
+
+.progress-overview .site-title {
+    font-size: 26px;
 }
 
 .progress-metrics {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-    margin: 28px 0 24px;
+    gap: 16px;
+    margin: 20px 0 18px;
 }
 
 .progress-metrics dt {
@@ -295,8 +303,8 @@ button:disabled, input:disabled {
 }
 
 .progress-metrics dd {
-    margin: 6px 0 0;
-    font-size: 22px;
+    margin: 4px 0 0;
+    font-size: 20px;
     line-height: 1.35;
     font-variant-numeric: tabular-nums;
 }
@@ -306,8 +314,6 @@ button:disabled, input:disabled {
 }
 
 .report-layout {
-    margin-right: 24px;
-    margin-left: 24px;
     display: grid;
     grid-template-areas: "map" "legend" "filters";
     grid-template-columns: minmax(0, 1fr);
@@ -327,11 +333,11 @@ button:disabled, input:disabled {
 .report-tabs, .report-filter-title {
     display: flex;
     align-items: center;
-    min-height: 52px;
+    min-height: 44px;
     margin: 0;
     padding: 0 16px;
     border-bottom: 1px solid var(--ui-border);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
 }
 
@@ -341,9 +347,14 @@ button:disabled, input:disabled {
 
 .report-tabs button {
     align-self: stretch;
+    padding: 0;
+    border: 0;
     border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
     color: var(--muted);
-    font-size: 16px;
+    font-size: 14px;
+    line-height: 1.4;
     cursor: pointer;
 }
 
@@ -468,6 +479,9 @@ button:disabled, input:disabled {
 }
 
 .tree-toggle {
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--muted);
     cursor: pointer;
 }
@@ -562,7 +576,7 @@ button:disabled, input:disabled {
     }
 
     .report-map {
-        height: clamp(560px, 70vh, 720px);
+        height: max(560px, calc(90svh - 48px));
     }
 
     .report-filters {
@@ -763,11 +777,6 @@ button:disabled, input:disabled {
 }
 
 @media (min-width: 640px) {
-    .report-layout {
-        margin-right: 40px;
-        margin-left: 40px;
-    }
-
     .site-container {
         padding-right: 40px;
         padding-left: 40px;
@@ -813,9 +822,12 @@ button:disabled, input:disabled {
     fill: var(--text);
 }
 
-.row-label,
 .axis-label {
     font-size: 14px;
+}
+
+.row-label {
+    font-size: 12px;
 }
 
 .section-label {
@@ -931,8 +943,8 @@ button:disabled, input:disabled {
 .field-label { display: block; margin-bottom: 8px; font-weight: 600; }
 main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), main select { max-width: 100%; padding: 10px 12px; border: 1px solid var(--ui-border-strong); border-radius: 6px; background: var(--surface-alt); color: var(--text); font: inherit; }
 main input[type="search"] { width: 100%; }
-main button, dialog button { padding: 8px 14px; border: 1px solid var(--ui-border-strong); border-radius: 6px; background: var(--surface-alt); color: var(--text); font: inherit; cursor: pointer; }
-main button:hover:not(:disabled), dialog button:hover { border-color: var(--accent); color: var(--accent); }
+:where(main button, dialog button) { padding: 8px 14px; border: 1px solid var(--ui-border-strong); border-radius: 6px; background: var(--surface-alt); color: var(--text); font: inherit; cursor: pointer; }
+:where(main button:hover:not(:disabled), dialog button:hover) { border-color: var(--accent); color: var(--accent); }
 main button:disabled { opacity: .5; cursor: default; }
 main :is(input,button,a):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .status-message { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
