@@ -1,0 +1,4 @@
+[workspace]
+members = ["crates/nudat-web"]
+exclude = ["vendor/nudat"]
+resolver = "2"

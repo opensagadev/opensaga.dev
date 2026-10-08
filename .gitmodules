@@ -1,0 +1,8 @@
+[submodule "vendor/saga"]
+	path = vendor/saga
+	url = https://github.com/opensagadev/saga.git
+	branch = main
+[submodule "vendor/nudat"]
+	path = vendor/nudat
+	url = https://github.com/opensagadev/nudat.git
+	branch = main
