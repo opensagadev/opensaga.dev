@@ -220,6 +220,18 @@ function render() {
     const sizeCell = document.createElement('td'); sizeCell.textContent = entry.directory ? countLabel(entry.count, 'file') : size(entry.size);
     if (!entry.directory) sizeCell.title = `Stored size: ${size(entry.stored_size)}`;
     const compressionCell = document.createElement('td'); compressionCell.textContent = entry.directory ? '—' : entry.compression;
+    row.onclick = event => {
+      if (!event.target.closest('button, input, a, label')) button.click();
+    };
+    button.onkeydown = event => {
+      if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      event.preventDefault();
+      const index = visible.indexOf(entry) + (event.key === 'ArrowDown' ? 1 : -1);
+      const next = visible[index];
+      if (!next) return;
+      $('entries').querySelectorAll('.file-name')[index].focus();
+      if (!next.directory) inspect(next);
+    };
     row.append(selectCell, nameCell, sizeCell, compressionCell); rows.append(row);
   }
   $('entries').replaceChildren(rows);

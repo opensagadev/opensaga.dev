@@ -17,6 +17,7 @@ self.onmessage = ({ data: { id, command, ...options } }) => {
       if (!save) throw new Error('Open or create a save first.');
       if (command === 'apply') { save.edit(options.values, options.keepDerived); result.snapshot = save.snapshot(); }
       else if (command === 'reset') { save.reset(); result.snapshot = save.snapshot(); }
+      else if (command === 'catalog') result.fields = save.catalog();
       else if (command === 'fields') result = save.fields(options.query || '', options.group || '', Boolean(options.advanced), options.offset || 0);
       else if (command === 'download') result.bytes = save.bytes(options.keepDerived);
       else throw new Error('Unknown save operation.');

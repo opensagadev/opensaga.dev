@@ -13,25 +13,33 @@
 </section>
 </div>
 <div class="site-container site-container-wide">
-<section id="archive-panel" class="archive-workspace application-workspace" aria-labelledby="archive-title" hidden>
-  <header class="workspace-header"><div class="truncate"><h2 id="archive-title" class="site-subtitle"></h2><p id="archive-info" class="caption status-message" role="status" aria-live="polite"></p></div><div class="button-row"><button id="verify" class="secondary-button archive-operation-action">Verify files</button><button id="cancel-archive-operation" class="secondary-button archive-operation-action" hidden>Cancel</button><button id="change-archive" class="secondary-button">Open another</button></div></header>
-  <div class="archive-toolbar"><button id="toggle-folders" class="secondary-button folder-toggle" aria-expanded="false" aria-controls="folder-sidebar">Folders</button><label class="search-field"><span aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="Search all files…" aria-label="Search all archive files" autocomplete="off"></label><label class="sort-field">Sort <select id="sort" aria-label="Sort files"><option value="name">Name</option><option value="size">Largest first</option></select></label><button id="download-file" class="secondary-button">Download file</button><div class="button-row selection-actions"><button id="download-all" class="primary-button">Download all</button><button id="clear-selection" class="icon-button" aria-label="Clear selection" title="Clear selection" disabled>×</button></div></div>
+<section id="archive-panel" class="archive-workspace" aria-labelledby="archive-title" hidden>
+  <header class="workspace-header">
+    <div class="archive-identity"><svg class="archive-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v14H4zM3 3h18v4H3zM10 11h4"/></svg><div class="truncate"><h2 id="archive-title" class="site-subtitle"></h2><p id="archive-info" class="caption status-message" role="status" aria-live="polite"></p></div></div>
+    <div class="button-row"><button id="verify" class="text-button archive-operation-action">Verify files</button><button id="cancel-archive-operation" class="text-button archive-operation-action" hidden>Cancel</button><button id="change-archive" class="secondary-button">Open another</button><button id="download-all" class="primary-button archive-export">Download all</button></div>
+  </header>
+  <div class="archive-toolbar">
+    <button id="toggle-folders" class="icon-button folder-toggle" aria-label="Show folders" title="Folders" aria-expanded="false" aria-controls="folder-sidebar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3zM9 4v16"/></svg></button>
+    <div class="archive-navigation"><div class="button-row"><button id="folder-back" class="icon-button" aria-label="Back to previous folder" title="Back">←</button><button id="folder-forward" class="icon-button" aria-label="Forward to next folder" title="Forward">→</button><button id="folder-up" class="icon-button" aria-label="Up one folder" title="Up one folder">↑</button></div><nav id="breadcrumbs" class="breadcrumbs" aria-label="Archive folders"></nav></div>
+    <label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="filter" type="search" placeholder="Search archive…" aria-label="Search all archive files" autocomplete="off"></label>
+  </div>
   <div class="archive-layout">
-    <aside id="folder-sidebar" class="archive-folders"><h3 class="pane-title">Folders</h3><nav id="folder-tree" aria-label="Archive folder tree"></nav></aside>
-    <div class="archive-browser workspace-surface">
-      <div class="archive-navigation"><div class="button-row"><button id="folder-back" class="icon-button" aria-label="Back to previous folder" title="Back">←</button><button id="folder-forward" class="icon-button" aria-label="Forward to next folder" title="Forward">→</button><button id="folder-up" class="icon-button" aria-label="Up one folder" title="Up one folder">↑</button></div><nav id="breadcrumbs" class="breadcrumbs" aria-label="Archive folders"></nav></div>
+    <aside id="folder-sidebar" class="archive-folders"><div class="folder-pane-body"><h3 class="pane-title">Folders</h3><nav id="folder-tree" aria-label="Archive folder tree"></nav></div></aside>
+    <div class="archive-browser">
+      <header class="explorer-pane-heading"><h3>Files</h3><label class="sort-field">Sort <select id="sort" aria-label="Sort files"><option value="name">Name</option><option value="size">Largest first</option></select></label></header>
       <div class="file-list-scroll"><table class="file-table"><thead><tr><th class="select-cell"><input id="select-all" type="checkbox" aria-label="Select visible files"></th><th scope="col">Name</th><th scope="col">Size</th><th scope="col">Compression</th></tr></thead><tbody id="entries"></tbody></table><div id="no-results" class="empty-state" hidden><strong>No files found</strong><p>Try a different name or file extension.</p><button id="clear-search" class="secondary-button">Clear search</button></div></div>
-      <footer class="list-footer"><span class="list-summary"><span id="results"></span><span id="selection-count" role="status" aria-live="polite"></span></span><div class="button-row"><button id="previous" class="icon-button" aria-label="Previous page">←</button><span id="page-info"></span><button id="next" class="icon-button" aria-label="Next page">→</button></div></footer>
     </div>
     <aside id="file-preview" class="file-preview" aria-label="File preview">
-      <div id="detail-empty" class="empty-state"><strong>File preview</strong><p>Select a file to preview its contents here.</p></div>
+      <header class="explorer-pane-heading"><h3>Preview</h3><div class="button-row"><button id="expand-preview" class="text-button" hidden>Expand ↗</button><button id="download-file" class="secondary-button">Download file</button></div></header>
+      <div id="detail-empty" class="empty-state"><svg class="preview-empty-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M13 5h15l9 9v29H13zM28 5v10h9M20 24h10M20 30h10"/></svg><strong>No file selected</strong><p>Choose a file to preview it here.</p><p class="caption">Text · images · textures · audio</p></div>
       <div id="detail-content" class="preview-content" hidden>
-        <header class="preview-header"><div class="preview-heading"><p class="eyebrow">Preview</p><button id="expand-preview" class="text-button" hidden>Expand ↗</button></div><h3 id="detail-name"></h3><p id="detail-path" class="caption"></p></header>
-        <p id="preview-note" class="caption"></p><pre id="inline-preview" class="numbered-preview" tabindex="0" aria-label="File contents" hidden></pre>
+        <header class="preview-header"><h3 id="detail-name"></h3><p id="detail-path" class="caption"></p><p id="preview-note" class="caption"></p></header>
+        <pre id="inline-preview" class="numbered-preview" tabindex="0" aria-label="File contents" hidden></pre>
         <div id="media-preview" class="media-preview" hidden><img id="image-preview" alt="" hidden><audio id="audio-preview" controls preload="metadata" aria-label="Audio preview" hidden></audio></div>
       </div>
     </aside>
   </div>
+  <footer class="list-footer archive-footer"><div class="archive-selection"><span class="list-summary"><span id="results"></span><span id="selection-count" role="status" aria-live="polite"></span></span><button id="clear-selection" class="text-button" disabled>Clear selection</button></div><div class="button-row"><button id="previous" class="icon-button" aria-label="Previous page">←</button><span id="page-info"></span><button id="next" class="icon-button" aria-label="Next page">→</button></div></footer>
 </section>
 </div>
 <dialog id="preview-dialog"><div class="dialog-heading"><h2 id="preview-title" class="site-subtitle">File preview</h2><form method="dialog"><button class="icon-button" aria-label="Close preview">×</button></form></div><pre id="preview-text" class="numbered-preview" tabindex="0" aria-label="File contents"></pre><img id="expanded-image" class="expanded-image" alt="" hidden></dialog>

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import vm from 'node:vm';
+import { buildTree } from '../site/apps/nusave/tree.js';
 import { initSync, WebSave } from '../dist/nusave/pkg/nusave_web.js';
 initSync({ module: readFileSync(new URL('../dist/nusave/pkg/nusave_web_bg.wasm', import.meta.url)) });
 const source = readFileSync(new URL('../site/apps/nusave/worker.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '').replace('await init();', '');
@@ -109,4 +110,44 @@ test('typed controls provide enum choices, limits, flags, text, and raw-field vi
   assert.equal(field(game, 'coins').editor.max, 4294967295);
   assert.equal(field(game, 'customizer.primary_name').editor.input, 'text');
   game.free();
+});
+
+
+test('complete catalog reaches the last entities without paging and refreshes edited values', () => {
+  const send = harness(); send('create', { options: false });
+  const { fields } = send('catalog');
+  assert.ok(fields.length > 5000);
+  assert.ok(fields.some(field => field.name === 'level_save[365].minikit_count'));
+  assert.ok(fields.some(field => field.editor.advanced));
+  send('apply', { values: [{ name: 'level_save[365].minikit_count', value: '7' }], keepDerived: false });
+  assert.equal(send('catalog').fields.find(field => field.name === 'level_save[365].minikit_count').editor.value, '7');
+});
+
+test('save tree groups every field once into named entities and nested minikits', () => {
+  const save = WebSave.create(false), fields = save.catalog();
+  const tree = buildTree(fields, { advanced: true });
+  assert.equal(tree.total, fields.length);
+  const assigned = [...tree.nodes.values()].flatMap(node => node.fields.map(field => field.name));
+  assert.equal(new Set(assigned).size, fields.length);
+  assert.equal(assigned.length, fields.length);
+  assert.equal(tree.nodes.get('Levels').children.length, 366);
+  assert.equal(tree.nodes.get('Characters').children.length, 340);
+  assert.equal(tree.nodes.get('Levels/level_save[0]').label, 'Titles');
+  assert.equal(tree.nodes.get('Levels/level_save[0]/minikits').fields.length, 10);
+  assert.equal(tree.nodes.get('Missions/mission[19]').fields.length, 2);
+  const normal = buildTree(fields);
+  assert.equal(normal.total, fields.filter(field => !field.editor.advanced).length);
+  save.free();
+});
+
+test('tree search retains ancestors and finds late entries and nested values', () => {
+  const save = WebSave.create(false), fields = save.catalog();
+  const tree = buildTree(fields, { query: 'level_save[365]' });
+  assert.equal(tree.roots.length, 1);
+  assert.equal(tree.nodes.get('Levels').children.length, 1);
+  assert.ok(tree.nodes.has('Levels/level_save[365]/minikits'));
+  assert.equal(tree.total, 12);
+  assert.equal(buildTree(fields, { query: 'missing-value-xyz' }).total, 0);
+  assert.equal(buildTree(fields, { query: 'titles' }).nodes.get('Levels/level_save[0]').count, 12);
+  save.free();
 });

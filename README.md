@@ -13,8 +13,10 @@ refresh their main branches and record the exact revisions in `build-info.json`.
 | `/nudat/` | nudat archive explorer | Rust library built to WASM and your local DAT/OBB |
 | `/nusave/` | nusave save editor | Rust library built to WASM and your local PC/Android save |
 
-nudat uses a wide, three-pane explorer with a folder sidebar, back/forward/up
-navigation, breadcrumbs, file sizes and compression in the list, and a roomy preview pane. It searches all archive paths, previews
+nudat uses one connected explorer with a folder sidebar, back/forward/up
+navigation and breadcrumbs beside archive search. File sizes and compression
+stay in the file list; preview and file download share the right pane. Click
+anywhere on a file row or use the up/down keys to browse previews. It searches all archive paths, previews
 text with line numbers inline and in an expanded dialog, previews browser-supported
 images, audio, DDS and ETC1 textures, verifies archives, and downloads individual files or ZIPs of a
 folder, search results, or a selection. An included synthetic example makes
@@ -187,3 +189,5 @@ to James Jessiman's [LDraw 6141](https://library.ldraw.org/parts/10969),
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Discord and GitHub
 icons come from Simple Icons 16.31.0 (CC0). D3 (ISC) and fflate (MIT) are bundled
 locally from their pinned npm packages. Copyrighted game assets are not included.
+
+The nusave editor organizes save values in a searchable tree of sections, levels, characters, areas, and missions. Select an item to edit its values; minikits are nested under their level. Draft edits are retained when moving between branches.

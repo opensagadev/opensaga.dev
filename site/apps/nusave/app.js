@@ -1,7 +1,10 @@
+import { buildTree } from './tree.js';
 const $ = id => document.getElementById(id);
 const worker = new Worker('./worker.js', { type: 'module' });
 const pending = new Map(), edits = new Map();
-let sequence = 0, ready = false, busy = false, snapshot = null, filename = '', view = 'fields', group = 'Progress', page = 0, fieldTotal = 0, renderVersion = 0, savedCopy = true;
+let sequence = 0, ready = false, busy = false, snapshot = null, filename = '', view = 'fields', group = 'Progress', renderVersion = 0, savedCopy = true;
+let catalog = null;
+const expanded = new Set();
 const actions = ['open-save', 'create-game', 'create-options', 'replace-save', 'start-over', 'download-save', 'apply-edits', 'reset-save'];
 function status(text, error = false) {
   const target = snapshot ? $('edit-status') : $('startup-status');
@@ -14,8 +17,6 @@ function controls() {
   $('apply-edits').textContent = edits.size ? `Apply changes (${edits.size})` : 'Apply changes';
   $('reset-save').disabled ||= !snapshot?.modified && !edits.size;
   $('save-workspace').setAttribute('aria-busy', String(busy));
-  $('fields-previous').disabled = busy || view !== 'fields' || page === 0;
-  $('fields-next').disabled = busy || view !== 'fields' || (page + 1) * 50 >= fieldTotal;
   $('keep-derived').disabled = busy;
   $('values-form').querySelectorAll('input, select, textarea').forEach(control => { control.disabled = busy || control.dataset.readonly === 'true'; });
 }
@@ -64,8 +65,8 @@ async function load(command, options, name) {
   await operation(async () => {
     status(command === 'open' ? 'Reading save…' : 'Creating save…');
     const result = await request(command, options);
-    filename = name; savedCopy = command === 'open'; edits.clear();
-    $('save-filter').value = ''; page = 0;
+    filename = name; savedCopy = command === 'open'; edits.clear(); catalog = null; expanded.clear();
+    $('save-filter').value = '';
     $('keep-derived').checked = false; $('show-advanced').checked = false;
     group = result.snapshot.kind.includes('SuperOptions') ? 'Settings' : 'Progress';
     updateSnapshot(result.snapshot); await changeView('fields');
@@ -91,7 +92,6 @@ function summaryRows() {
   if (!rows.length) { const empty = document.createElement('p'); empty.className = 'empty-state'; empty.textContent = 'No matching values.'; fragment.append(empty); }
   $('summary-view').replaceChildren(fragment);
   $('save-results').textContent = `${rows.length.toLocaleString()} values${edits.size ? ' · Changes not yet applied' : ''}`;
-  $('fields-page').textContent = '—';
 }
 function storedValue(field, value) {
   return field.editor.input === 'text' ? `text:${value}` : field.editor.input === 'hex' ? `hex:${value.replace(/\s/g, '')}` : value;
@@ -158,27 +158,75 @@ async function renderFromStart() {
   const content = $('fields-view');
   if (content.getBoundingClientRect().top < 0) content.scrollIntoView({ block: 'start' });
 }
-function renderGroups(groups) {
+function renderTree(tree) {
+  const scrollTop = $('save-groups').scrollTop;
   const fragment = document.createDocumentFragment();
-  for (const name of ['', ...groups]) {
-    const button = document.createElement('button'); button.textContent = name || 'All values'; button.className = 'document-group';
-    if (group === name) button.setAttribute('aria-current', 'true');
-    button.onclick = () => { group = name; page = 0; $('save-filter').value = ''; renderFromStart().catch(error => status(error.message, true)); };
-    fragment.append(button);
+  const focused = document.activeElement?.dataset.saveNode;
+  const focusedToggle = document.activeElement?.dataset.saveToggle;
+  function select(node) {
+    expanded.add(node.id);
+    while (!node.fields.length && node.children.length) { node = node.children[0]; expanded.add(node.id); }
+    group = node.id; renderFromStart().catch(error => status(error.message, true));
   }
+  function branch(node) {
+    const item = document.createElement('li');
+    const row = document.createElement('div'); row.className = 'save-tree-row';
+    const toggle = document.createElement('button'); toggle.className = 'tree-toggle';
+    const open = expanded.has(node.id);
+    toggle.dataset.saveToggle = node.id;
+    toggle.setAttribute('aria-label', `${open ? 'Collapse' : 'Expand'} ${node.label}`);
+    toggle.setAttribute('aria-expanded', String(open));
+    if (!node.children.length) { toggle.className = 'tree-spacer'; toggle.disabled = true; toggle.setAttribute('aria-hidden', 'true'); }
+    toggle.onclick = () => { open ? expanded.delete(node.id) : expanded.add(node.id); renderTree(tree); };
+    const button = document.createElement('button'); button.className = 'save-tree-label'; button.dataset.saveNode = node.id;
+    const label = document.createElement('span'); label.textContent = node.label; label.title = node.label;
+    const count = document.createElement('small'); count.textContent = node.parent ? node.count : node.children.length || node.fields.length;
+    count.title = node.parent || !node.children.length ? `${node.count} values` : `${node.children.length} items`;
+    button.append(label, count);
+    if (node.id === group) button.setAttribute('aria-current', 'true');
+    button.onclick = () => select(node);
+    row.append(toggle, button); item.append(row);
+    if (open && node.children.length) { const list = document.createElement('ul'); node.children.forEach(child => list.append(branch(child))); item.append(list); }
+    return item;
+  }
+  const list = document.createElement('ul'); tree.roots.forEach(node => list.append(branch(node))); fragment.append(list);
   $('save-groups').replaceChildren(fragment);
+  $('save-groups').scrollTop = scrollTop;
+  if (focusedToggle) [...$('save-groups').querySelectorAll('[data-save-toggle]')].find(button => button.dataset.saveToggle === focusedToggle)?.focus({ preventScroll: true });
+  if (focused) [...$('save-groups').querySelectorAll('[data-save-node]')].find(button => button.dataset.saveNode === focused)?.focus({ preventScroll: true });
 }
 async function render() {
   const version = ++renderVersion;
   if (!snapshot) return;
   if (view === 'summary') { summaryRows(); controls(); return; }
+  if (!catalog) {
+    const result = await request('catalog');
+    if (version !== renderVersion) return;
+    catalog = result.fields;
+  }
   const query = $('save-filter').value.trim();
-  const result = await request('fields', { query, group: query ? '' : group, advanced: $('show-advanced').checked, offset: page * 50 });
-  if (version !== renderVersion) return;
-  fieldTotal = result.total; renderGroups(result.groups);
-  $('fields-heading').textContent = query ? 'Search results' : group || 'All values';
+  const tree = buildTree(catalog, { advanced: $('show-advanced').checked, query });
+  if (!tree.nodes.has(group)) group = [...tree.nodes.values()].find(node => node.fields.length)?.id || '';
+  const node = tree.nodes.get(group);
+  if (query && node) for (let parent = node.parent; parent; parent = parent.parent) expanded.add(parent.id);
+  renderTree(tree);
+  $('fields-heading').textContent = node?.label || 'No matching values';
+  const ancestry = []; for (let parent = node?.parent; parent; parent = parent.parent) ancestry.unshift(parent.label);
+  $('fields-context').textContent = ancestry.length ? ancestry.join(' / ') : 'Save contents';
+  $('fields-instruction').textContent = node?.children.length ? 'Edit these values, or choose a child item in the tree.' : 'Edit values, then apply your changes or download the save.';
+  const children = document.createDocumentFragment();
+  for (const child of node?.children || []) {
+    const button = document.createElement('button'); button.className = 'save-child-link';
+    const label = document.createElement('span'); label.textContent = child.label;
+    const count = document.createElement('small'); count.textContent = `${child.count} values`;
+    button.append(label, count);
+    button.onclick = () => { group = child.id; expanded.add(node.id); renderFromStart().catch(error => status(error.message, true)); };
+    children.append(button);
+  }
+  $('save-children').replaceChildren(children); $('save-children').hidden = !node?.children.length;
+  const fields = node?.fields || [];
   const rows = document.createDocumentFragment();
-  for (const [index, field] of result.fields.entries()) {
+  for (const [index, field] of fields.entries()) {
     const fieldset = document.createElement('fieldset'); fieldset.className = 'property-field';
     fieldset.classList.toggle('is-edited', edits.has(field.name));
     fieldset.classList.toggle('property-field-wide', field.editor.input === 'hex');
@@ -191,13 +239,12 @@ async function render() {
     help.append(summary, description, key);
     fieldset.append(label, fieldControl(field, index), help); rows.append(fieldset);
   }
-  $('save-fields').replaceChildren(rows); $('fields-empty').hidden = result.total > 0;
-  $('save-results').textContent = `${result.total.toLocaleString()} ${result.total === 1 ? 'value' : 'values'}`;
-  $('fields-page').textContent = `${page + 1} / ${Math.max(1, Math.ceil(result.total / 50))}`;
+  $('save-fields').replaceChildren(rows); $('fields-empty').hidden = tree.total > 0;
+  $('save-results').textContent = query ? `${tree.total.toLocaleString()} matching values in the tree` : `${node?.count.toLocaleString() || 0} values in ${node?.label || 'this section'}`;
   controls();
 }
 async function changeView(next) {
-  view = next; page = 0;
+  view = next;
   for (const name of ['summary', 'fields']) {
     $(name + '-tab').setAttribute('aria-selected', String(view === name)); $(name + '-tab').tabIndex = view === name ? 0 : -1;
     $(name + '-view').hidden = view !== name;
@@ -210,7 +257,7 @@ async function applyEdits() {
   if (!edits.size) return;
   const values = [...edits].map(([name, edit]) => ({ name, value: edit.value }));
   const result = await request('apply', { values, keepDerived: $('keep-derived').checked });
-  edits.clear(); savedCopy = false; updateSnapshot(result.snapshot); await render();
+  edits.clear(); catalog = null; savedCopy = false; updateSnapshot(result.snapshot); await render();
 }
 for (const name of ['summary', 'fields']) {
   $(name + '-tab').onclick = () => changeView(name).catch(error => status(error.message, true));
@@ -237,7 +284,7 @@ for (const id of ['save-start', 'save-workspace']) {
 $('values-form').onsubmit = event => { event.preventDefault(); $('apply-edits').click(); };
 $('apply-edits').onclick = () => operation(async () => { await applyEdits(); status('Changes applied. Download the save to keep them.'); });
 $('reset-save').onclick = () => operation(async () => {
-  const result = await request('reset'); edits.clear(); savedCopy = true;
+  const result = await request('reset'); edits.clear(); catalog = null; savedCopy = true;
   updateSnapshot(result.snapshot); await render(); status('Restored the original values.');
 });
 $('download-save').onclick = () => operation(async () => {
@@ -245,10 +292,8 @@ $('download-save').onclick = () => operation(async () => {
   const result = await request('download', { keepDerived: $('keep-derived').checked });
   download(result.bytes, filename); savedCopy = true; status('Save prepared for download.');
 });
-$('save-filter').oninput = () => { page = 0; render().catch(error => status(error.message, true)); };
-$('show-advanced').onchange = () => { page = 0; group = ''; render().catch(error => status(error.message, true)); };
+$('save-filter').oninput = () => { render().catch(error => status(error.message, true)); };
+$('show-advanced').onchange = () => { render().catch(error => status(error.message, true)); };
 $('keep-derived').onchange = () => render().catch(error => status(error.message, true));
-$('fields-previous').onclick = () => { page--; renderFromStart().catch(error => status(error.message, true)); };
-$('fields-next').onclick = () => { page++; renderFromStart().catch(error => status(error.message, true)); };
 window.addEventListener('beforeunload', event => { if (hasPendingChanges()) { event.preventDefault(); event.returnValue = ''; } });
 controls();

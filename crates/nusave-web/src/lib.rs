@@ -1,4 +1,7 @@
-use nusave::{apply_values, properties, property_description, property_editor, summary_rows, Save};
+use nusave::{
+    apply_values, properties, property_description, property_editor, summary_rows, Property,
+    PropertyEditor, Save,
+};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
@@ -36,6 +39,36 @@ struct Field {
     editor: Editor,
 }
 
+impl Field {
+    fn new(field: &Property, editor: PropertyEditor) -> Self {
+        Self {
+            name: field.name.clone(),
+            kind: format!("{:?}", field.kind).to_ascii_lowercase(),
+            offset: field.offset,
+            size: field.size,
+            description: property_description(&field.name),
+            editor: Editor {
+                label: editor.label,
+                group: editor.group,
+                input: editor.input,
+                value: editor.value,
+                min: editor.min,
+                max: editor.max,
+                readonly: editor.readonly,
+                advanced: editor.advanced,
+                choices: editor
+                    .choices
+                    .into_iter()
+                    .map(|c| Choice {
+                        label: c.label,
+                        value: c.value,
+                    })
+                    .collect(),
+            },
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct Editor {
     label: String,
@@ -46,6 +79,7 @@ struct Editor {
     min: Option<i64>,
     max: Option<i64>,
     readonly: bool,
+    advanced: bool,
 }
 #[derive(Serialize)]
 struct Choice {
@@ -149,32 +183,18 @@ impl WebSave {
                 .into_iter()
                 .skip(offset)
                 .take(50)
-                .map(|(field, editor)| Field {
-                    name: field.name.clone(),
-                    kind: format!("{:?}", field.kind).to_ascii_lowercase(),
-                    offset: field.offset,
-                    size: field.size,
-                    description: property_description(&field.name),
-                    editor: Editor {
-                        label: editor.label,
-                        group: editor.group,
-                        input: editor.input,
-                        value: editor.value,
-                        min: editor.min,
-                        max: editor.max,
-                        readonly: editor.readonly,
-                        choices: editor
-                            .choices
-                            .into_iter()
-                            .map(|c| Choice {
-                                label: c.label,
-                                value: c.value,
-                            })
-                            .collect(),
-                    },
-                })
+                .map(|(field, editor)| Field::new(field, editor))
                 .collect(),
         })
+    }
+
+    /// Complete schema for a lazy tree UI. Values and editor choices come from nusave.
+    pub fn catalog(&self) -> Result<JsValue, JsValue> {
+        let fields: Vec<_> = properties(&self.save)
+            .iter()
+            .map(|field| Field::new(field, property_editor(&self.save, field)))
+            .collect();
+        serialize(&fields)
     }
 
     pub fn edit(&mut self, values: JsValue, keep_derived: bool) -> Result<(), JsValue> {
