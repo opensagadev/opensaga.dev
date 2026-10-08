@@ -117,17 +117,41 @@ git commit
 
 Only pin commits available in the public source repositories. Each deployment
 includes `build-info.json` with the exact source revisions. The `branch = main`
-submodule hints support deliberate `git submodule update --remote`; ordinary
-builds and CI always use the pinned revisions.
+submodule hints support `git submodule update --remote`. Local builds and pull
+request checks use the pinned revisions. Main pushes and manual/upstream
+dispatches refresh both applications to their latest `main` commits before
+building, without committing new pins. Refreshing both on every deployment
+build prevents a later site-only push from rolling back an application.
 
 ## Deployment
 
 `.github/workflows/pages.yml` builds both WASM applications, compiles shared
 styles, assembles all pages, and validates the result on main pushes and pull
-requests. Main pushes/manual dispatches deploy `dist/`; pull requests only
-build and test. Configure this repository's Pages source as **GitHub Actions**
-and custom domain as **opensaga.dev**. Remove that domain from Saga's Pages
-settings when cutting over, and point DNS at the opensagadev Pages host.
+requests. Main pushes/manual dispatches upload `dist/` as a Pages artifact;
+pull requests only build and test. Deployment stays disabled until the repository
+Actions variable `PAGES_DEPLOY_ENABLED` is set to `true`.
+
+Saga and NuDat each have a `notify-pages.yml` workflow that dispatches this
+repository's `pages.yml` on pushes to `main` (and can be run manually).
+Set the Actions secret `OPENSAGA_PAGES_TOKEN` in both source repositories, or
+as an organization secret available to both. Use a fine-grained personal access
+token restricted to `opensagadev/opensaga.dev` with **Actions: read and write**;
+approve it for the organization if required. The source repositories' automatic
+`GITHUB_TOKEN` cannot dispatch workflows in another repository. Until this
+secret is configured, the notification steps skip with a warning. Saga's
+notification workflow becomes active after the migration PR is merged.
+
+To rebuild manually with the latest application sources:
+
+```sh
+gh workflow run pages.yml --repo opensagadev/opensaga.dev --ref main
+```
+
+When ready to cut over, configure this repository's Pages source as **GitHub
+Actions**, move the **opensaga.dev** custom domain from Saga's Pages settings,
+and point DNS at the opensagadev Pages host. Then set `PAGES_DEPLOY_ENABLED` to
+`true` and dispatch the build. Until then, leave the old domain and deployment
+in place and the Saga migration PR unmerged.
 `CNAME` alone does not configure the domain for an Actions deployment; see
 [GitHub's Pages configuration guidance](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
 
