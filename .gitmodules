@@ -6,3 +6,7 @@
 	path = vendor/nudat
 	url = https://github.com/opensagadev/nudat.git
 	branch = main
+[submodule "vendor/nusave"]
+	path = vendor/nusave
+	url = https://github.com/opensagadev/nusave.git
+	branch = main

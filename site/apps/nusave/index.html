@@ -1,0 +1,27 @@
+<div class="site-container">
+<section class="app-heading" aria-labelledby="nusave-title"><div><h1 id="nusave-title" class="site-title">nusave save editor</h1><p class="site-intro">Inspect and edit The Complete Saga saves. Files stay in your browser.</p></div></section>
+<input id="save-file" class="sr-only" type="file" aria-label="Open a save file" disabled>
+<section id="save-start" class="drop-zone" aria-labelledby="open-title">
+  <h2 id="open-title">Open a save</h2><p>Drop a PC or Android save here, or start with a new Android save.</p>
+  <div class="button-row"><button id="open-save" class="primary-button" disabled>Choose save</button><button id="create-game" class="secondary-button" disabled>New game save</button><button id="create-options" class="secondary-button" disabled>New options</button></div>
+  <p class="caption">Game progress and Android SuperOptions · up to 16 MiB</p>
+  <div class="operation-status"><p id="startup-status" class="status-message" role="status">Starting nusave…</p></div>
+</section>
+</div>
+<div class="site-container site-container-wide">
+<section id="save-workspace" class="panel" aria-labelledby="save-title" hidden>
+  <header class="workspace-header"><div class="truncate"><h2 id="save-title" class="site-subtitle"></h2><p id="save-info" class="caption"></p></div><div class="button-row"><button id="replace-save" class="secondary-button">Open another</button><button id="start-over" class="secondary-button">New save</button><button id="download-save" class="primary-button">Download save</button></div></header>
+  <div class="document-toolbar"><div class="report-tabs" role="tablist" aria-label="Save view"><button id="fields-tab" role="tab" aria-selected="true" aria-controls="fields-view">Values</button><button id="summary-tab" role="tab" aria-selected="false" aria-controls="summary-view" tabindex="-1">Summary</button></div><label class="search-field"><span aria-hidden="true">⌕</span><input id="save-filter" type="search" placeholder="Search values…" aria-label="Search save contents"></label><label class="checkbox-field"><input id="show-advanced" type="checkbox"> Show raw fields</label></div>
+  <div class="document-layout">
+    <nav id="save-groups" class="document-groups" aria-label="Save sections"></nav>
+    <div class="document-browser">
+      <div id="fields-view" class="document-scroll" role="tabpanel" aria-labelledby="fields-tab" tabindex="0"><form id="values-form"><table class="property-table"><thead><tr><th scope="col">Property</th><th scope="col">Value</th></tr></thead><tbody id="save-fields"></tbody></table></form><p id="fields-empty" class="empty-state" hidden>No matching properties.</p></div>
+      <div id="summary-view" class="document-scroll" role="tabpanel" aria-labelledby="summary-tab" tabindex="0" hidden></div>
+      <footer class="list-footer"><span id="save-results"></span><div class="button-row"><button id="fields-previous" class="icon-button" aria-label="Previous properties" disabled>←</button><span id="fields-page">1 / 1</span><button id="fields-next" class="icon-button" aria-label="Next properties" disabled>→</button></div></footer>
+    </div>
+  </div>
+  <footer class="document-actions"><div class="save-feedback"><p id="edit-status" class="status-message" role="status" aria-live="polite">Changes affect this copy only. Download to keep them.</p><label class="checkbox-field"><input id="keep-derived" type="checkbox"> Preserve stored checksum and slot code</label></div><div class="button-row"><button id="reset-save" class="secondary-button" disabled>Reset changes</button><button id="apply-edits" class="primary-button" disabled>Apply changes</button></div></footer>
+</section>
+</div>
+<dialog id="discard-dialog" aria-labelledby="discard-title"><form method="dialog"><h2 id="discard-title" class="site-subtitle">Discard your changes?</h2><p class="site-intro">This save has edits that have not been downloaded.</p><div class="button-row"><button value="cancel" class="secondary-button" autofocus>Keep editing</button><button value="discard" class="primary-button">Discard changes</button></div></form></dialog>
+<script type="module" src="./app.js"></script>

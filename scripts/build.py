@@ -24,7 +24,7 @@ def assemble(saga: Path, output: Path, *, skip_wasm=False):
     shutil.copyfile(ROOT / 'node_modules/fflate/esm/browser.js', assets / 'fflate.js')
     if skip_wasm:
         # A layout preview must clearly distinguish itself from a playable build.
-        for route in ['play', 'nudat']:
+        for route in ['play', 'nudat', 'nusave']:
             path = output / route / 'index.html'
             html = path.read_text()
             html = html.replace('<!--__PREVIEW__-->', '')
@@ -35,9 +35,10 @@ def assemble(saga: Path, output: Path, *, skip_wasm=False):
         wasm = saga / 'bazel-bin/src'
         for name in ['saga.js', 'saga.wasm']:
             shutil.copyfile(wasm / name, output / 'play' / name)
-        shutil.copytree(ROOT / 'build/nudat', output / 'nudat/pkg', dirs_exist_ok=True)
+        for name in ['nudat', 'nusave']:
+            shutil.copytree(ROOT / 'build' / name, output / name / 'pkg', dirs_exist_ok=True)
     versions = {}
-    for name in ['saga', 'nudat']:
+    for name in ['saga', 'nudat', 'nusave']:
         path = ROOT / 'vendor' / name
         versions[name] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=path, text=True).strip()
     (output / 'build-info.json').write_text(json.dumps({'sources': versions, 'wasm': not skip_wasm}, indent=2) + '\n')
@@ -50,14 +51,15 @@ def main():
     parser.add_argument('--saga', type=Path, default=ROOT / 'vendor/saga', help='override Saga checkout for local development')
     args = parser.parse_args()
     saga = args.saga.resolve()
-    for path in [saga / 'matching.json', ROOT / 'vendor/nudat/Cargo.toml']:
+    for path in [saga / 'matching.json', ROOT / 'vendor/nudat/Cargo.toml', ROOT / 'vendor/nusave/Cargo.toml']:
         if not path.is_file():
             parser.error(f'{path} missing; run git submodule update --init --recursive')
     (ROOT / 'build').mkdir(exist_ok=True)
     run('npm', 'run', 'build:css')
     if not args.skip_wasm:
         run('bazel', 'build', '--config=wasm', '//src:saga_wasm', cwd=saga)
-        run('wasm-pack', 'build', 'crates/nudat-web', '--target', 'web', '--out-dir', '../../build/nudat', '--release', '--', '--locked')
+        for name in ['nudat', 'nusave']:
+            run('wasm-pack', 'build', f'crates/{name}-web', '--target', 'web', '--out-dir', f'../../build/{name}', '--release', '--', '--locked')
     # Stage a complete tree; never mix a new site with old application assets.
     staging = ROOT / 'build/site'
     if staging.exists():

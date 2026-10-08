@@ -58,7 +58,7 @@ class PagesTest(unittest.TestCase):
         (assets / "d3.min.js").write_text("// test fixture")
         return {
             name: (self.output.parent / name).read_text(encoding="utf-8")
-            for name in ("index.html", "progress/index.html", "play/index.html", "nudat/index.html")
+            for name in ("index.html", "progress/index.html", "play/index.html", "nudat/index.html", "nusave/index.html")
         }
 
     def test_nudat_uses_shared_shell_and_owns_its_worker(self):
@@ -68,6 +68,13 @@ class PagesTest(unittest.TestCase):
         self.assertNotIn("<style", page)
         self.assertTrue((self.output.parent / "nudat/worker.js").is_file())
         self.assertFalse((self.output.parent / "nudat/coi-serviceworker.js").exists())
+
+    def test_nusave_uses_the_shared_shell_and_its_own_worker(self):
+        page = self.generate()["nusave/index.html"]
+        self.assertIn('id="save-file"', page)
+        self.assertIn('id="values-form"', page)
+        self.assertNotIn("<style", page)
+        self.assertTrue((self.output.parent / "nusave/worker.js").is_file())
 
     def test_report_cannot_close_inline_script(self):
         self.report["units"][0]["functions"][0]["demangled_name"] = "</script><script>alert(1)</script>"

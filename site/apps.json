@@ -1,6 +1,34 @@
 [
-  {"id":"home", "route":"", "label":"Home", "title":"Completing The Saga"},
-  {"id":"play", "route":"play/", "label":"Play", "title":"Saga web build"},
-  {"id":"progress", "route":"progress/", "label":"Progress", "title":"Saga progress"},
-  {"id":"nudat", "sectioned":true, "route":"nudat/", "label":"NuDat", "title":"NuDat archive explorer"}
+  {
+    "id": "home",
+    "route": "",
+    "label": "Home",
+    "title": "Completing The Saga"
+  },
+  {
+    "id": "play",
+    "route": "play/",
+    "label": "Play",
+    "title": "Saga web build"
+  },
+  {
+    "id": "progress",
+    "route": "progress/",
+    "label": "Progress",
+    "title": "Saga progress"
+  },
+  {
+    "id": "nudat",
+    "sectioned": true,
+    "route": "nudat/",
+    "label": "nudat",
+    "title": "nudat archive explorer"
+  },
+  {
+    "id": "nusave",
+    "sectioned": true,
+    "route": "nusave/",
+    "label": "nusave",
+    "title": "nusave save editor"
+  }
 ]

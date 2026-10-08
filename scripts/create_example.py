@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate NuDat's small, synthetic example archive using a local NuDat CLI."""
+"""Regenerate nudat's small, synthetic example archive using a local nudat CLI."""
 import argparse
 import json
 import io
@@ -12,13 +12,13 @@ import subprocess
 import tempfile
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--nudat', default='nudat', help='path to the NuDat CLI')
+parser.add_argument('--nudat', default='nudat', help='path to the nudat CLI')
 args = parser.parse_args()
 output = Path(__file__).resolve().parents[1] / 'site/apps/nudat/example.dat'
 with tempfile.TemporaryDirectory() as temporary:
     root = Path(temporary)
     files = {
-        'README.txt': 'Welcome to the NuDat example archive.\n\nThese are synthetic demonstration files, not game assets.\n\nOpen a folder, search for a filename, preview a text file, or select files to download as a ZIP. Your archives are processed locally.\n',
+        'README.txt': 'Welcome to the nudat example archive.\n\nThese are synthetic demonstration files, not game assets.\n\nOpen a folder, search for a filename, preview a text file, or select files to download as a ZIP. Your archives are processed locally.\n',
         'config/settings.ini': '[example]\nname = OpenSaga demo\nversion = 1\n\n[display]\nwidth = 1280\nheight = 720\n',
         'levels/demo/scene.json': json.dumps({'name': 'Demo scene', 'objects': [{'name': 'camera', 'position': [0, 4, 10]}, {'name': 'player', 'position': [0, 0, 0]}]}, indent=2) + '\n',
         'levels/demo/readme.txt': 'This folder demonstrates nested archive navigation.\nUse the breadcrumbs above the file list to return to a parent folder.\n',

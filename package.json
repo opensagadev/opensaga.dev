@@ -7,7 +7,7 @@
     "build:css": "tailwindcss -i site/shared/input.css -o build/site.css --minify",
     "build:preview": "python3 scripts/build.py --skip-wasm",
     "serve": "python3 scripts/serve.py",
-    "test": "python3 -m unittest discover -s tests && node tests/nudat-worker.test.mjs && node tests/textures.test.mjs"
+    "test": "python3 -m unittest discover -s tests && node tests/nudat-worker.test.mjs && node tests/textures.test.mjs && node tests/nusave-worker.test.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",

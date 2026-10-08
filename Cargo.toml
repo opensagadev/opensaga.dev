@@ -1,4 +1,4 @@
 [workspace]
-members = ["crates/nudat-web"]
-exclude = ["vendor/nudat"]
+members = ["crates/nudat-web", "crates/nusave-web"]
+exclude = ["vendor/nudat", "vendor/nusave"]
 resolver = "2"

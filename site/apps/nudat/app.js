@@ -35,9 +35,9 @@ function startWorker(onReady) {
   };
   worker.onerror = event => {
     ready = false;
-    for (const request of pending.values()) request.reject(new Error(event.message || 'NuDat could not start. Reload this page to try again.'));
+    for (const request of pending.values()) request.reject(new Error(event.message || 'nudat could not start. Reload this page to try again.'));
     pending.clear();
-    status('NuDat could not start. Reload this page to try again.', true);
+    status('nudat could not start. Reload this page to try again.', true);
     controls();
   };
 }

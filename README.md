@@ -1,18 +1,19 @@
 # opensaga.dev
 
 Standalone GitHub Pages site for opensaga. This repository owns the landing
-page, shared design, progress explorer, Saga player, and NuDat browser tool.
-The source projects are pinned Git submodules; deployment never silently
-builds their latest branches.
+page, shared design, progress explorer, Saga player, nudat archive explorer, and nusave save editor.
+Local and pull-request builds use pinned source submodules. Deployment builds
+refresh their main branches and record the exact revisions in `build-info.json`.
 
 | Route | Application | Input |
 | --- | --- | --- |
 | `/` | Landing page and project FAQ | Saga's committed matching metrics |
 | `/progress/` | Interactive Saga decompilation statistics | `vendor/saga/matching.json` |
 | `/play/` | Experimental Saga WebAssembly player | Bazel build and your own Android OBB |
-| `/nudat/` | NuDat archive explorer | Rust library built to WASM and your local DAT/OBB |
+| `/nudat/` | nudat archive explorer | Rust library built to WASM and your local DAT/OBB |
+| `/nusave/` | nusave save editor | Rust library built to WASM and your local PC/Android save |
 
-NuDat uses a wide, three-pane explorer with a folder sidebar, back/forward/up
+nudat uses a wide, three-pane explorer with a folder sidebar, back/forward/up
 navigation, breadcrumbs, file sizes and compression in the list, and a roomy preview pane. It searches all archive paths, previews
 text with line numbers inline and in an expanded dialog, previews browser-supported
 images, audio, DDS and ETC1 textures, verifies archives, and downloads individual files or ZIPs of a
@@ -25,6 +26,16 @@ are limited to 1 MiB and 10,000 displayed lines; media previews
 are limited to 64 MiB and depend on browser codec support. Audio never autoplays
 and stops when leaving its preview. Downloading an individual entry is limited to the library's 512 MiB read limit; ZIP exports
 accumulate decoded output in browser memory.
+
+nusave opens Windows PC and Android game saves and Android SuperOptions. Its
+summary and searchable, grouped field browser use the library's schema and interpreted
+values. Edit values directly with numeric inputs, toggles, dropdowns, text fields, and
+named flag checkboxes. The library provides control types, limits, and choices;
+invalid edits preserve the current save. Create new Android saves/options, reset
+edits, and download saves with repaired derived fields or
+preserve their exact stored bytes. The application works in a Web Worker with a
+16 MiB input limit. Unknown bytes and the detected platform layout are preserved;
+new saves use Android defaults rather than converting PC files.
 
 Texture previews decode on the archive worker, without GPU compression extensions.
 Supported formats are DDS BC1–BC5 (DXT1–DXT5, ATI1/2 and equivalent DX10 formats),
@@ -73,7 +84,7 @@ the system light/dark preference. Navigation, panels, buttons, inputs, tables,
 and focus states all use these shared tokens. There are no page-local stylesheets. `site/apps.json` supplies navigation and
 application titles; `"wide": true` gives an application the shared wide workspace.
 For mixed widths, `"sectioned": true` lets the content use separate `site-container`
-and `site-container site-container-wide` sections, as NuDat does for its introduction
+and `site-container site-container-wide` sections, as nudat does for its introduction
 and explorer. Existing `/play/` and `/progress/` links, including `?obb=`,
 retain their behavior.
 
@@ -85,8 +96,10 @@ reusable UI components to `site/shared/theme.css`. The migrated player and
 progress explorer retain their complete HTML templates and receive the same
 shared header, head, and footer.
 
-`crates/nudat-web` is the WASM adapter; format parsing, compression and
-validation belong to NuDat. Its library is portable by default; filesystem
+`crates/nudat-web` and `crates/nusave-web` are thin WASM adapters. Save parsing,
+checksums, schema, summaries, and validated edits live in the nusave library;
+filesystem operations live in its CLI. Archive parsing, compression and
+validation belong to nudat. Its library is portable by default; filesystem
 operations and terminal dependencies belong to the separate CLI crate.
 The library handles `Read`, `Seek`, and `Write` sources, while the native CLI
 owns files, directories, temporary staging, and thread scheduling.
@@ -97,7 +110,7 @@ on by default, including source-unit headings in the function-size view, and
 can be toggled off. Source files can be searched in the sidebar. Matching
 graphs retain the red-to-green score scale.
 
-Regenerate the synthetic NuDat example with
+Regenerate the synthetic nudat example with
 `python3 scripts/create_example.py --nudat /path/to/nudat`. The checked-in
 archive contains only generated demonstration files.
 
@@ -109,9 +122,11 @@ git -C vendor/saga fetch origin
 git -C vendor/saga checkout <published-saga-commit>
 git -C vendor/nudat fetch origin
 git -C vendor/nudat checkout <published-nudat-commit>
+git -C vendor/nusave fetch origin
+git -C vendor/nusave checkout <published-nusave-commit>
 npm run build
 npm test
-git add vendor/saga vendor/nudat
+git add vendor/saga vendor/nudat vendor/nusave
 git commit
 ```
 
@@ -119,22 +134,22 @@ Only pin commits available in the public source repositories. Each deployment
 includes `build-info.json` with the exact source revisions. The `branch = main`
 submodule hints support `git submodule update --remote`. Local builds and pull
 request checks use the pinned revisions. Main pushes and manual/upstream
-dispatches refresh both applications to their latest `main` commits before
-building, without committing new pins. Refreshing both on every deployment
+dispatches refresh all applications to their latest `main` commits before
+building, without committing new pins. Refreshing all on every deployment
 build prevents a later site-only push from rolling back an application.
 
 ## Deployment
 
-`.github/workflows/pages.yml` builds both WASM applications, compiles shared
+`.github/workflows/pages.yml` builds all WASM applications, compiles shared
 styles, assembles all pages, and validates the result on main pushes and pull
 requests. Main pushes/manual dispatches upload `dist/` as a Pages artifact;
 pull requests only build and test. Deployment stays disabled until the repository
 Actions variable `PAGES_DEPLOY_ENABLED` is set to `true`.
 
-Saga and NuDat each have a `notify-pages.yml` workflow that dispatches this
+Saga, nudat, and nusave each have a `notify-pages.yml` workflow that dispatches this
 repository's `pages.yml` on pushes to `main` (and can be run manually).
-Set the Actions secret `OPENSAGA_PAGES_TOKEN` in both source repositories, or
-as an organization secret available to both. Use a fine-grained personal access
+Set the Actions secret `OPENSAGA_PAGES_TOKEN` in all three source repositories, or
+as an organization secret available to all three. Use a fine-grained personal access
 token restricted to `opensagadev/opensaga.dev` with **Actions: read and write**;
 approve it for the organization if required. The source repositories' automatic
 `GITHUB_TOKEN` cannot dispatch workflows in another repository. Until this

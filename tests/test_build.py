@@ -1,4 +1,4 @@
-"""Check the assembled deployment, including both real WASM applications."""
+"""Check the assembled deployment, including all real WASM applications."""
 from html.parser import HTMLParser
 from pathlib import Path
 import json
@@ -41,17 +41,18 @@ class DeploymentTest(unittest.TestCase):
 
     def test_wasm_payloads_and_worker_scope(self):
         metadata = json.loads((DIST / 'build-info.json').read_text())
-        self.assertEqual(set(metadata['sources']), {'saga', 'nudat'})
+        self.assertEqual(set(metadata['sources']), {'saga', 'nudat', 'nusave'})
         for sha in metadata['sources'].values():
             self.assertRegex(sha, r'^[0-9a-f]{40}$')
         if not metadata['wasm']:
             self.skipTest('layout preview omits application binaries')
-        for path in [DIST / 'play/saga.wasm', DIST / 'nudat/pkg/nudat_web_bg.wasm']:
+        for path in [DIST / 'play/saga.wasm', DIST / 'nudat/pkg/nudat_web_bg.wasm', DIST / 'nusave/pkg/nusave_web_bg.wasm']:
             self.assertEqual(path.read_bytes()[:4], b'\0asm')
-        for path in ['play/saga.js', 'nudat/pkg/nudat_web.js', 'nudat/worker.js', 'assets/fflate.js', 'assets/d3.min.js']:
+        for path in ['play/saga.js', 'nudat/pkg/nudat_web.js', 'nudat/worker.js', 'nusave/pkg/nusave_web.js', 'nusave/worker.js', 'assets/fflate.js', 'assets/d3.min.js']:
             self.assertTrue((DIST / path).is_file(), path)
-        worker = (DIST / 'nudat/worker.js').read_text()
-        for href in re.findall(r"from ['\"]([^'\"]+)", worker):
-            self.assertTrue((DIST / 'nudat' / href).is_file(), href)
+        for name in ['nudat', 'nusave']:
+            worker = (DIST / name / 'worker.js').read_text()
+            for href in re.findall(r"from ['\"]([^'\"]+)", worker):
+                self.assertTrue((DIST / name / href).is_file(), href)
         self.assertTrue((DIST / 'play/coi-serviceworker.js').is_file())
         self.assertFalse((DIST / 'coi-serviceworker.js').exists())

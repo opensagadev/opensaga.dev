@@ -1,9 +1,9 @@
 [package]
-name = "nudat-web"
+name = "nusave-web"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "Browser adapter for the nudat archive library"
+description = "Browser adapter for the nusave save library"
 repository = "https://github.com/opensagadev/opensaga.dev"
 license = "MIT"
 
@@ -11,10 +11,11 @@ license = "MIT"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-nudat = { path = "../../vendor/nudat", default-features = false }
+nusave = { path = "../../vendor/nusave", default-features = false }
 wasm-bindgen = "=0.2.129"
 js-sys = "=0.3.106"
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
+
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
