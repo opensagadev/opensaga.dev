@@ -62,7 +62,7 @@ body {
 
 .site-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 1040px;
     margin-right: auto;
     margin-left: auto;
     padding-right: 24px;
@@ -89,7 +89,7 @@ body {
 }
 
 .site-intro {
-    max-width: 650px;
+    max-width: 850px;
     margin: 16px 0 0;
     color: var(--muted);
     font-size: 18px;
