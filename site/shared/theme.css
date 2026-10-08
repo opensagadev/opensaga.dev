@@ -104,6 +104,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent);
 .app-card > span { color: var(--muted); }
 .home-hero { padding-block: 18px; }
 .home-hero .site-title { font-size: clamp(32px, 4vw, 42px); max-width: 680px; }
+.home-hero .primary-button { min-height: 44px; padding: 10px 20px; font-size: 15px; }
 .home-progress { margin-top: 28px; padding-block: 16px; border-top: 1px solid var(--ui-border); border-bottom: 1px solid var(--ui-border); }
 .home-progress-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 12px; font-size: 13px; }
 .home-progress-heading span { font: 600 18px var(--mono); color: var(--accent); }
