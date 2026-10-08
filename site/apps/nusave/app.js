@@ -153,12 +153,17 @@ function fieldControl(field, index) {
   }
   return control;
 }
+async function renderFromStart() {
+  await render();
+  const content = $('fields-view');
+  if (content.getBoundingClientRect().top < 0) content.scrollIntoView({ block: 'start' });
+}
 function renderGroups(groups) {
   const fragment = document.createDocumentFragment();
   for (const name of ['', ...groups]) {
     const button = document.createElement('button'); button.textContent = name || 'All values'; button.className = 'document-group';
     if (group === name) button.setAttribute('aria-current', 'true');
-    button.onclick = () => { group = name; page = 0; $('save-filter').value = ''; render().catch(error => status(error.message, true)); };
+    button.onclick = () => { group = name; page = 0; $('save-filter').value = ''; renderFromStart().catch(error => status(error.message, true)); };
     fragment.append(button);
   }
   $('save-groups').replaceChildren(fragment);
@@ -240,7 +245,7 @@ $('download-save').onclick = () => operation(async () => {
 $('save-filter').oninput = () => { page = 0; render().catch(error => status(error.message, true)); };
 $('show-advanced').onchange = () => { page = 0; group = ''; render().catch(error => status(error.message, true)); };
 $('keep-derived').onchange = () => render().catch(error => status(error.message, true));
-$('fields-previous').onclick = () => { page--; render().catch(error => status(error.message, true)); };
-$('fields-next').onclick = () => { page++; render().catch(error => status(error.message, true)); };
+$('fields-previous').onclick = () => { page--; renderFromStart().catch(error => status(error.message, true)); };
+$('fields-next').onclick = () => { page++; renderFromStart().catch(error => status(error.message, true)); };
 window.addEventListener('beforeunload', event => { if (hasPendingChanges()) { event.preventDefault(); event.returnValue = ''; } });
 controls();

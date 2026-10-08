@@ -85,7 +85,10 @@ and focus states all use these shared tokens. There are no page-local stylesheet
 application titles; `"wide": true` gives an application the shared wide workspace.
 For mixed widths, `"sectioned": true` lets the content use separate `site-container`
 and `site-container site-container-wide` sections, as nudat does for its introduction
-and explorer. Existing `/play/` and `/progress/` links, including `?obb=`,
+and explorer. Workspaces use up to 1920px with outer gutters. Save fields and
+desktop archive lists flow with the page; section navigation and the archive
+preview stay alongside them while scrolling. The progress map has a near-screen-height
+viewport with a separate source filter sidebar. Existing `/play/` and `/progress/` links, including `?obb=`,
 retain their behavior.
 
 Add a manifest entry and a `site/apps/<id>/index.html` content fragment. The

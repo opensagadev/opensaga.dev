@@ -138,6 +138,11 @@ function renderFolders() {
   $('folder-tree').replaceChildren(list);
   if (focusedFolder !== undefined) [...$('folder-tree').querySelectorAll('[data-folder-path]')].find(button => button.dataset.folderPath === focusedFolder)?.focus({ preventScroll: true });
 }
+function revealFileList() {
+  const list = document.querySelector('.file-list-scroll');
+  list.scrollTop = 0;
+  if (list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: 'start' });
+}
 function navigate(path, record = true) {
   if (record && path !== folder) {
     folderHistory.splice(historyIndex + 1);
@@ -150,7 +155,7 @@ function navigate(path, record = true) {
   activeEntry = null; previewVersion++; clearPreview();
   $('detail-empty').hidden = false; $('detail-content').hidden = true;
   render();
-  document.querySelector('.file-list-scroll').scrollTop = 0;
+  revealFileList();
   $('breadcrumbs').lastElementChild.focus({ preventScroll: true });
 }
 function render() {
@@ -381,8 +386,8 @@ $('toggle-folders').onclick = () => {
 $('filter').oninput = () => { page = 0; render(); };
 $('sort').onchange = () => { page = 0; render(); };
 $('clear-search').onclick = () => { $('filter').value = ''; render(); $('filter').focus(); };
-$('previous').onclick = () => { page--; render(); $('entries').closest('.file-list-scroll').scrollTop = 0; };
-$('next').onclick = () => { page++; render(); $('entries').closest('.file-list-scroll').scrollTop = 0; };
+$('previous').onclick = () => { page--; render(); revealFileList(); };
+$('next').onclick = () => { page++; render(); revealFileList(); };
 $('select-all').onchange = () => { for (const entry of visible.filter(entry => !entry.directory)) $('select-all').checked ? selected.add(entry.path) : selected.delete(entry.path); render(); };
 $('clear-selection').onclick = () => { selected.clear(); render(); };
 $('download-all').onclick = () => downloadPaths(selected.size ? [...selected] : scopeEntries().map(entry => entry.path));
