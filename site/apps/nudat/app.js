@@ -2,6 +2,7 @@ const $ = id => document.getElementById(id);
 const pageSize = 50;
 let worker, ready = false, busy = false, generation = 0, sequence = 0;
 let entries = [], visible = [], page = 0, folder = '', archiveName = '', currentFile = null, activeEntry = null;
+let archiveSummary = '';
 let selected = new Set(), previewVersion = 0;
 let folderHistory = [''], historyIndex = 0, folderRoot = null;
 const expandedFolders = new Set(['']);
@@ -11,8 +12,10 @@ const audioTypes = { mp3: 'audio/mpeg', wav: 'audio/wav', wave: 'audio/wav', ogg
 const pending = new Map();
 const countLabel = (count, noun) => `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
 const status = (text, error = false) => {
-  $('status').textContent = text;
-  $('status').dataset.error = String(error);
+  const target = $('archive-panel').hidden ? $('status') : $('archive-info');
+  target.textContent = text || (target.id === 'archive-info' ? archiveSummary : '');
+  target.title = target.textContent;
+  target.dataset.error = String(error);
 };
 function startWorker(onReady) {
   ready = false;
@@ -21,7 +24,7 @@ function startWorker(onReady) {
     if (data.type === 'ready') {
       ready = true;
       controls();
-      if (onReady) onReady(); else status('Ready.');
+      if (onReady) onReady(); else status('');
     } else if (data.type === 'progress') status(data.text);
     else {
       const request = pending.get(data.id);
@@ -59,11 +62,13 @@ function save(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 function controls() {
-  for (const id of ['archive-file', 'choose-archive', 'open-demo', 'change-archive', 'verify', 'download-all', 'download-selected', 'download-file']) $(id).disabled = busy || !ready;
-  $('download-all').disabled ||= !scopeEntries().length;
-  $('download-selected').disabled ||= !selected.size;
+  for (const id of ['archive-file', 'choose-archive', 'open-demo', 'change-archive', 'verify', 'download-all', 'download-file']) $(id).disabled = busy || !ready;
+  $('download-all').disabled ||= !selected.size && !scopeEntries().length;
+  $('clear-selection').disabled = busy || !selected.size;
   $('download-file').disabled ||= !activeEntry;
   $('cancel-operation').hidden = !busy;
+  $('cancel-archive-operation').hidden = !busy;
+  $('verify').hidden = busy;
   $('archive-panel').setAttribute('aria-busy', String(busy));
   document.querySelectorAll('[data-file-action]').forEach(button => { button.disabled = busy || !ready; });
   $('drop-zone').classList.toggle('is-busy', busy || !ready);
@@ -218,7 +223,6 @@ function render() {
   $('results').textContent = query ? countLabel(scoped.length, 'result') : `${countLabel(directories.size, 'folder')} · ${countLabel(files.length, 'file')}`;
   $('page-info').textContent = `${page + 1} / ${pages}`;
   $('previous').disabled = page === 0; $('next').disabled = page + 1 >= pages;
-  $('download-all').textContent = query ? 'Download results' : folder ? 'Download folder' : 'Download all';
   updateSelection(); controls();
 }
 function updateSelection() {
@@ -227,8 +231,9 @@ function updateSelection() {
   $('select-all').checked = files.length > 0 && count === files.length;
   $('select-all').indeterminate = count > 0 && count < files.length;
   $('select-all').disabled = !files.length;
-  $('selection-bar').hidden = !selected.size;
-  $('selection-count').textContent = `${countLabel(selected.size, 'file')} selected`;
+  $('selection-count').textContent = selected.size ? `${countLabel(selected.size, 'file')} selected` : '';
+  $('results').hidden = selected.size > 0;
+  $('download-all').textContent = selected.size ? 'Download selected' : $('filter').value.trim() ? 'Download results' : folder ? 'Download folder' : 'Download all';
   controls();
 }
 function clearPreview() {
@@ -334,10 +339,10 @@ async function openArchive(file) {
     folderHistory = ['']; historyIndex = 0; expandedFolders.clear(); expandedFolders.add(''); buildFolders();
     $('filter').value = '';
     $('archive-title').textContent = file.name;
-    $('archive-info').textContent = `${countLabel(entries.length, 'file')} · ${size(file.size)} · ${result.version === -3 ? 'PC archive' : result.version === -2 ? 'Legacy PC archive' : result.version === -5 ? 'Android archive' : `Format ${result.version}`}`;
+    archiveSummary = `${countLabel(entries.length, 'file')} · ${size(file.size)} · ${result.version === -3 ? 'PC archive' : result.version === -2 ? 'Legacy PC archive' : result.version === -5 ? 'Android archive' : `Format ${result.version}`}`;
     $('archive-panel').hidden = false; $('drop-zone').hidden = true;
     $('detail-empty').hidden = false; $('detail-content').hidden = true;
-    render(); status('Archive opened.');
+    render(); status('');
   });
   $('archive-file').value = '';
 }
@@ -380,8 +385,7 @@ $('previous').onclick = () => { page--; render(); $('entries').closest('.file-li
 $('next').onclick = () => { page++; render(); $('entries').closest('.file-list-scroll').scrollTop = 0; };
 $('select-all').onchange = () => { for (const entry of visible.filter(entry => !entry.directory)) $('select-all').checked ? selected.add(entry.path) : selected.delete(entry.path); render(); };
 $('clear-selection').onclick = () => { selected.clear(); render(); };
-$('download-selected').onclick = () => downloadPaths([...selected]);
-$('download-all').onclick = () => downloadPaths(scopeEntries().map(entry => entry.path));
+$('download-all').onclick = () => downloadPaths(selected.size ? [...selected] : scopeEntries().map(entry => entry.path));
 $('download-file').onclick = () => {
   const entry = activeEntry;
   operation(`Extracting ${entry.path}…`, async () => {
@@ -397,7 +401,7 @@ $('expand-preview').onclick = () => {
   else if (previewKind === 'image') { $('expanded-image').src = previewURL; $('expanded-image').alt = activeEntry.name; }
   $('preview-dialog').showModal();
 };
-$('cancel-operation').onclick = () => {
+for (const id of ['cancel-operation', 'cancel-archive-operation']) $(id).onclick = () => {
   generation++; previewVersion++; clearPreview(); worker.terminate();
   for (const request of pending.values()) request.reject(new Error('Operation cancelled.'));
   pending.clear(); busy = false;
