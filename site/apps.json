@@ -2,5 +2,5 @@
   {"id":"home", "route":"", "label":"Home", "title":"Completing The Saga"},
   {"id":"play", "route":"play/", "label":"Play", "title":"Saga web build"},
   {"id":"progress", "route":"progress/", "label":"Progress", "title":"Saga progress"},
-  {"id":"nudat", "wide":true, "route":"nudat/", "label":"NuDat", "title":"NuDat archive explorer"}
+  {"id":"nudat", "sectioned":true, "route":"nudat/", "label":"NuDat", "title":"NuDat archive explorer"}
 ]

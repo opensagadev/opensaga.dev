@@ -1,3 +1,4 @@
+<div class="site-container">
 <section class="app-heading" aria-labelledby="nudat-title">
   <div><h1 id="nudat-title" class="site-title">NuDat archive explorer</h1>
   <p class="site-intro">Open DAT and OBB archives, preview files, and extract them. Files stay in your browser.</p></div>
@@ -9,7 +10,9 @@
   <div class="button-row"><button id="choose-archive" class="primary-button" disabled>Choose archive</button><button id="open-demo" class="secondary-button" disabled>Open example</button></div>
   <p class="caption">PC and Android formats</p>
 </section>
-<div class="operation-status"><p id="status" class="status-message" role="status" aria-live="polite">Starting NuDat…</p><button id="cancel-operation" class="text-button" hidden>Cancel operation</button></div>
+</div>
+<div class="site-container operation-status"><p id="status" class="status-message" role="status" aria-live="polite">Starting NuDat…</p><button id="cancel-operation" class="text-button" hidden>Cancel operation</button></div>
+<div class="site-container site-container-wide">
 <section id="archive-panel" class="archive-workspace panel" aria-labelledby="archive-title" hidden>
   <header class="workspace-header"><div class="truncate"><h2 id="archive-title" class="site-subtitle"></h2><p id="archive-info" class="caption"></p></div><div class="button-row"><button id="verify" class="secondary-button">Verify files</button><button id="change-archive" class="secondary-button">Open another</button></div></header>
   <div class="archive-navigation"><div class="button-row"><button id="folder-back" class="icon-button" aria-label="Back to previous folder" title="Back">←</button><button id="folder-forward" class="icon-button" aria-label="Forward to next folder" title="Forward">→</button><button id="folder-up" class="icon-button" aria-label="Up one folder" title="Up one folder">↑</button></div><nav id="breadcrumbs" class="breadcrumbs" aria-label="Archive folders"></nav></div>
@@ -31,5 +34,6 @@
     </aside>
   </div>
 </section>
+</div>
 <dialog id="preview-dialog"><div class="dialog-heading"><h2 id="preview-title" class="site-subtitle">File preview</h2><form method="dialog"><button class="icon-button" aria-label="Close preview">×</button></form></div><pre id="preview-text" class="numbered-preview" tabindex="0" aria-label="File contents"></pre><img id="expanded-image" class="expanded-image" alt="" hidden></dialog>
 <script type="module" src="./app.js"></script>

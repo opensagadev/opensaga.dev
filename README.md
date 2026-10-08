@@ -71,7 +71,10 @@ links and selection, gold folders, and the unchanged logo supply the color.
 Matching graphs retain the red-to-green score scale. It follows
 the system light/dark preference. Navigation, panels, buttons, inputs, tables,
 and focus states all use these shared tokens. There are no page-local stylesheets. `site/apps.json` supplies navigation and
-application titles; `"wide": true` gives an application the shared wide workspace. Existing `/play/` and `/progress/` links, including `?obb=`,
+application titles; `"wide": true` gives an application the shared wide workspace.
+For mixed widths, `"sectioned": true` lets the content use separate `site-container`
+and `site-container site-container-wide` sections, as NuDat does for its introduction
+and explorer. Existing `/play/` and `/progress/` links, including `?obb=`,
 retain their behavior.
 
 Add a manifest entry and a `site/apps/<id>/index.html` content fragment. The
