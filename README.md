@@ -86,7 +86,8 @@ progress explorer retain their complete HTML templates and receive the same
 shared header, head, and footer.
 
 `crates/nudat-web` is the WASM adapter; format parsing, compression and
-validation belong to NuDat. Its dependency disables NuDat's CLI feature.
+validation belong to NuDat. Its library is portable by default; filesystem
+operations and terminal dependencies belong to the separate CLI crate.
 The library handles `Read`, `Seek`, and `Write` sources, while the native CLI
 owns files, directories, temporary staging, and thread scheduling.
 
