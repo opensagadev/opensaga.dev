@@ -1,19 +1,17 @@
 <section class="app-heading" aria-labelledby="nudat-title">
-  <div><p class="eyebrow">NuDat · archive tools</p><h1 id="nudat-title" class="site-title">Archive explorer</h1>
-  <p class="site-intro">Browse, inspect, and extract DAT and OBB files. Everything happens on your device.</p></div>
-  <span class="badge"><span class="status-dot"></span> Local processing</span>
+  <div><h1 id="nudat-title" class="site-title">NuDat archive explorer</h1>
+  <p class="site-intro">Open DAT and OBB archives, preview files, and extract them. Files stay in your browser.</p></div>
 </section>
 <input id="archive-file" class="sr-only" type="file" accept=".dat,.obb" aria-label="Open a DAT or OBB archive" disabled>
 <section id="drop-zone" class="drop-zone" aria-labelledby="open-title">
-  <div class="archive-mark" aria-hidden="true"><span></span><span></span><span></span></div>
   <h2 id="open-title">Open an archive</h2>
   <p>Drop a <strong>.dat</strong> or <strong>.obb</strong> file here to explore its contents.</p>
-  <div class="button-row"><button id="choose-archive" class="primary-button" disabled>Choose archive</button><button id="open-demo" class="secondary-button" disabled>Explore an example</button></div>
-  <p class="caption">Supports PC and Android archives · No uploads or account needed</p>
+  <div class="button-row"><button id="choose-archive" class="primary-button" disabled>Choose archive</button><button id="open-demo" class="secondary-button" disabled>Open example</button></div>
+  <p class="caption">PC and Android formats</p>
 </section>
 <div class="operation-status"><p id="status" class="status-message" role="status" aria-live="polite">Starting NuDat…</p><button id="cancel-operation" class="text-button" hidden>Cancel operation</button></div>
 <section id="archive-panel" class="archive-workspace panel" aria-labelledby="archive-title" hidden>
-  <header class="workspace-header"><div class="truncate"><p class="eyebrow">Open archive</p><h2 id="archive-title" class="site-subtitle"></h2><p id="archive-info" class="caption"></p></div><div class="button-row"><button id="verify" class="secondary-button">Verify files</button><button id="change-archive" class="secondary-button">Open another</button></div></header>
+  <header class="workspace-header"><div class="truncate"><h2 id="archive-title" class="site-subtitle"></h2><p id="archive-info" class="caption"></p></div><div class="button-row"><button id="verify" class="secondary-button">Verify files</button><button id="change-archive" class="secondary-button">Open another</button></div></header>
   <div class="archive-navigation"><div class="button-row"><button id="folder-back" class="icon-button" aria-label="Back to previous folder" title="Back">←</button><button id="folder-forward" class="icon-button" aria-label="Forward to next folder" title="Forward">→</button><button id="folder-up" class="icon-button" aria-label="Up one folder" title="Up one folder">↑</button></div><nav id="breadcrumbs" class="breadcrumbs" aria-label="Archive folders"></nav></div>
   <div class="archive-toolbar"><button id="toggle-folders" class="secondary-button folder-toggle" aria-expanded="false" aria-controls="folder-sidebar">Folders</button><label class="search-field"><span aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="Search all files…" aria-label="Search all archive files" autocomplete="off"></label><label class="sort-field">Sort <select id="sort" aria-label="Sort files"><option value="name">Name</option><option value="size">Largest first</option></select></label><button id="download-file" class="secondary-button">Download file</button><button id="download-all" class="primary-button">Download folder</button></div>
   <div id="selection-bar" class="selection-bar" hidden><span id="selection-count"></span><button id="clear-selection" class="text-button">Clear selection</button><button id="download-selected" class="primary-button">Download selected</button></div>
@@ -24,7 +22,7 @@
       <footer class="list-footer"><span id="results"></span><div class="button-row"><button id="previous" class="icon-button" aria-label="Previous page">←</button><span id="page-info"></span><button id="next" class="icon-button" aria-label="Next page">→</button></div></footer>
     </div>
     <aside id="file-preview" class="file-preview" aria-label="File preview">
-      <div id="detail-empty" class="empty-state"><span class="file-symbol" aria-hidden="true">≡</span><strong>File preview</strong><p>Select a file to preview its contents here.</p></div>
+      <div id="detail-empty" class="empty-state"><strong>File preview</strong><p>Select a file to preview its contents here.</p></div>
       <div id="detail-content" class="preview-content" hidden>
         <header class="preview-header"><div class="preview-heading"><p class="eyebrow">Preview</p><button id="expand-preview" class="text-button" hidden>Expand ↗</button></div><h3 id="detail-name"></h3><p id="detail-path" class="caption"></p></header>
         <p id="preview-note" class="caption"></p><pre id="inline-preview" class="numbered-preview" tabindex="0" aria-label="File contents" hidden></pre>

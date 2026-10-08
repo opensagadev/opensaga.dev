@@ -15,7 +15,7 @@ builds their latest branches.
 NuDat uses a wide, three-pane explorer with a folder sidebar, back/forward/up
 navigation, breadcrumbs, file sizes and compression in the list, and a roomy preview pane. It searches all archive paths, previews
 text with line numbers inline and in an expanded dialog, previews browser-supported
-images and audio, verifies archives, and downloads individual files or ZIPs of a
+images, audio, DDS and ETC1 textures, verifies archives, and downloads individual files or ZIPs of a
 folder, search results, or a selection. An included synthetic example makes
 the complete workflow available without original game assets. Long operations
 can be cancelled; an invalid replacement archive preserves the open archive. A Web Worker reads small
@@ -25,6 +25,18 @@ are limited to 1 MiB and 10,000 displayed lines; media previews
 are limited to 64 MiB and depend on browser codec support. Audio never autoplays
 and stops when leaving its preview. Downloading an individual entry is limited to the library's 512 MiB read limit; ZIP exports
 accumulate decoded output in browser memory.
+
+Texture previews decode on the archive worker, without GPU compression extensions.
+Supported formats are DDS BC1–BC5 (DXT1–DXT5, ATI1/2 and equivalent DX10 formats),
+16/24/32-bit RGB(A), and ETC1 in DDS, PKM, or KTX1 containers. This includes
+Saga's `.etc1` and `.android_etc1_tex` DDS files and their nonstandard pixel-format
+header size. Previews show the base mip of the first face/layer, with a 16-megapixel
+limit; unsupported formats (including BC6/7, ETC2, and volume textures) show an
+error instead of a misleading image. The parser follows the
+[Microsoft DDS documentation](https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide)
+and [Khronos ETC1 specification](https://registry.khronos.org/OpenGL/extensions/OES/OES_compressed_ETC1_RGB8_texture.txt).
+The example archive contains generated DDS/ETC1 samples. Decoder tests cover
+colors, alpha, subblock orientation, row padding, container variants, and corrupt data.
 
 ## Build and preview
 
@@ -54,8 +66,9 @@ checkout locally: `python3 scripts/build.py --saga ../saga`.
 `site/shared/` owns the shell, navigation, theme, typography, forms, buttons,
 tables, dialogs, and responsive layouts. Tailwind scans all templates and JS
 under `site/`; the build emits one stylesheet used by every application.
-The theme uses the logo’s violet for actions and selection, blue for secondary
-data, gold for archive folders and ambiguity, and slate for surfaces. It follows
+The theme uses neutral surfaces, thin rules, and simple document layouts. Violet
+links and selection, gold folders, and the unchanged logo supply the color.
+Matching graphs retain the red-to-green score scale. It follows
 the system light/dark preference. Navigation, panels, buttons, inputs, tables,
 and focus states all use these shared tokens. There are no page-local stylesheets. `site/apps.json` supplies navigation and
 application titles; `"wide": true` gives an application the shared wide workspace. Existing `/play/` and `/progress/` links, including `?obb=`,

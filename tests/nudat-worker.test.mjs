@@ -1,3 +1,4 @@
+import { decodeTexture } from '../site/apps/nudat/textures.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -14,7 +15,7 @@ function harness() {
   const self = { postMessage: message => messages.push(message) };
   const file = bytes => ({ size: bytes.length, slice: (start, end) => Uint8Array.from(bytes.subarray(start, end)).buffer });
   vm.runInNewContext(source, {
-    self, WebArchive, Zip, ZipPassThrough, Blob, Uint8Array,
+    self, WebArchive, Zip, ZipPassThrough, Blob, Uint8Array, decodeTexture,
     FileReaderSync: class { readAsArrayBuffer(buffer) { return buffer; } },
   });
   return (command, options = {}) => {
@@ -26,7 +27,7 @@ function harness() {
 test('opens and previews an archive, preserving it after an invalid replacement', () => {
   const send = harness();
   const opened = send('open', { bytes: example });
-  assert.equal(opened.entries.length, 73);
+  assert.equal(opened.entries.length, 75);
   assert.equal(opened.version, -3);
   assert.match(send('open', { bytes: Buffer.from('invalid') }).error, /DAT|archive|fill|short/i);
   const preview = send('read', { path: 'levels/demo/scene.json' });
@@ -58,4 +59,14 @@ test('reads image and audio previews as intact binary files', () => {
   assert.equal(wav.subarray(8, 12).toString(), 'WAVE');
   assert.equal(wav.readUInt32LE(24), 22050);
   assert.equal(wav.readUInt32LE(40), 66150 * 2);
+});
+
+test('decodes DDS and Saga ETC1 through the archive worker', () => {
+  const send = harness(); send('open', { bytes: example });
+  for (const [path, format] of [['media/palette.dds','BC1'],['media/palette.android_etc1_tex','ETC1']]) {
+    const result = send('texture', { path });
+    assert.equal(result.error, undefined); assert.equal(result.format, format);
+    assert.equal(result.width,160); assert.equal(result.height,96);
+    assert.equal(result.rgba.length,160*96*4); assert.equal(result.rgba[3],255);
+  }
 });

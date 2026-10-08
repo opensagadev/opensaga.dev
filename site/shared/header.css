@@ -3,9 +3,9 @@
 .opensaga-header .opensaga-brand { display: block; flex-shrink: 0; width: 162px; color: inherit; }
 .opensaga-brand svg { display: block; width: 100%; height: auto; }
 .opensaga-header nav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.opensaga-header nav > a { padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.opensaga-header nav > a { padding: 7px 10px; border-radius: 0; font-size: 12px; font-weight: 600; }
 .opensaga-header nav > a:hover { color: var(--accent); background: var(--surface-alt); }
-.opensaga-header a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+.opensaga-header a[aria-current="page"] { color: var(--accent); box-shadow: inset 0 -2px var(--accent); }
 .opensaga-socials { display: flex; align-items: center; gap: 2px; margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--ui-border); }
 .opensaga-socials a { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; }
 .opensaga-socials a:hover { color: var(--accent); }

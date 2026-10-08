@@ -1,3 +1,4 @@
+import { decodeTexture } from './textures.js';
 import init, { WebArchive } from './pkg/nudat_web.js';
 import { Zip, ZipPassThrough } from '../assets/fflate.js';
 
@@ -19,6 +20,9 @@ self.onmessage = ({ data }) => {
     } else if (command === 'read') {
       const bytes = archive.read(data.path);
       self.postMessage({ id, bytes }, [bytes.buffer]);
+    } else if (command === 'texture') {
+      const texture = decodeTexture(archive.read(data.path));
+      self.postMessage({ id, ...texture }, [texture.rgba.buffer]);
     } else if (command === 'verify') {
       archive.verify();
       self.postMessage({ id });

@@ -21,7 +21,7 @@ function startWorker(onReady) {
     if (data.type === 'ready') {
       ready = true;
       controls();
-      if (onReady) onReady(); else status('Ready to explore. Choose an archive or try the example.');
+      if (onReady) onReady(); else status('Ready.');
     } else if (data.type === 'progress') status(data.text);
     else {
       const request = pending.get(data.id);
@@ -274,13 +274,25 @@ async function inspect(entry) {
   const imageType = Object.hasOwn(imageTypes, extension) ? imageTypes[extension] : null;
   const audioType = Object.hasOwn(audioTypes, extension) ? audioTypes[extension] : null;
   const isText = /\.(txt|scp|csv|xml|json|ini|cfg|lua|h|c|cpp|log|md|yaml|yml)$/i.test(entry.path);
-  if (!isText && !imageType && !audioType) return;
+  const isTexture = /\.(dds|etc1|android_etc1_tex|pkm|ktx|tex)$/i.test(entry.path);
+  if (!isText && !imageType && !audioType && !isTexture) return;
   const limit = isText ? 1 : 64;
   if (entry.size > limit * 1024 * 1024) { $('preview-note').textContent = `This file exceeds the ${limit} MiB ${isText ? 'text' : 'media'} preview limit. Download it to open the full file.`; return; }
   $('preview-note').textContent = 'Reading preview…';
   try {
-    const { bytes } = await request('read', { path: entry.path });
+    const result = await request(isTexture ? 'texture' : 'read', { path: entry.path });
     if (version !== previewVersion) return;
+    let { bytes } = result;
+    let textureNote = '';
+    if (isTexture) {
+      const canvas = document.createElement('canvas'); canvas.width = result.width; canvas.height = result.height;
+      canvas.getContext('2d').putImageData(new ImageData(result.rgba, result.width, result.height), 0, 0);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (version !== previewVersion) return;
+      if (!blob) throw new Error('Could not render texture preview.');
+      bytes = blob;
+      textureNote = ` · ${result.format}${result.mipmaps > 1 ? ' · base mip' : ''}${result.faces > 1 ? ' · first face / layer' : ''}`;
+    }
     if (isText) {
       previewKind = 'text'; previewText = new TextDecoder().decode(bytes);
       const truncated = renderTextPreview($('inline-preview'), previewText);
@@ -288,19 +300,19 @@ async function inspect(entry) {
       $('preview-note').textContent = truncated ? 'Showing the first 10,000 lines. Download the file to read all lines.' : entry.size ? 'Text preview' : 'This file is empty.';
       return;
     }
-    previewKind = imageType ? 'image' : 'audio';
-    previewURL = URL.createObjectURL(new Blob([bytes], { type: imageType || audioType }));
-    const media = $(imageType ? 'image-preview' : 'audio-preview');
+    previewKind = imageType || isTexture ? 'image' : 'audio';
+    previewURL = URL.createObjectURL(new Blob([bytes], { type: isTexture ? 'image/png' : imageType || audioType }));
+    const media = $(previewKind === 'image' ? 'image-preview' : 'audio-preview');
     media.onerror = () => {
       if (version !== previewVersion) return;
       $('media-preview').hidden = true; $('expand-preview').hidden = true;
       $('preview-note').textContent = `This browser cannot preview this ${previewKind} file. It may be damaged or use an unsupported format. Download it to open it in another application.`;
     };
-    if (imageType) {
+    if (previewKind === 'image') {
       media.alt = entry.name;
       media.onload = () => {
         if (version !== previewVersion) return;
-        $('preview-note').textContent = `${media.naturalWidth.toLocaleString()} × ${media.naturalHeight.toLocaleString()} pixels`;
+        $('preview-note').textContent = `${media.naturalWidth.toLocaleString()} × ${media.naturalHeight.toLocaleString()} pixels${textureNote}`;
         $('expand-preview').hidden = false;
       };
     } else {
@@ -325,7 +337,7 @@ async function openArchive(file) {
     $('archive-info').textContent = `${countLabel(entries.length, 'file')} · ${size(file.size)} · ${result.version === -3 ? 'PC archive' : result.version === -2 ? 'Legacy PC archive' : result.version === -5 ? 'Android archive' : `Format ${result.version}`}`;
     $('archive-panel').hidden = false; $('drop-zone').hidden = true;
     $('detail-empty').hidden = false; $('detail-content').hidden = true;
-    render(); status('Archive opened. Browse a folder or select a file to inspect it.');
+    render(); status('Archive opened.');
   });
   $('archive-file').value = '';
 }

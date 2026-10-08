@@ -32,6 +32,25 @@ with tempfile.TemporaryDirectory() as temporary:
     colors = [(105, 64, 182), (76, 120, 168), (232, 180, 43), (89, 100, 116)]
     pixels = b''.join(b'\x00' + b''.join(bytes(colors[x // 80]) for x in range(320)) for _ in range(180))
     files['media/palette.png'] = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 320, 180, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(pixels)) + chunk(b'IEND', b'')
+    def dds(fourcc, data, width, height):
+        header = bytearray(128)
+        header[:4] = b'DDS '
+        for offset, value in [(4,124),(8,0x81007),(12,height),(16,width),(20,len(data)),(76,24 if fourcc == b'ETC1' else 32),(80,4),(108,0x1000)]:
+            struct.pack_into('<I', header, offset, value)
+        header[84:88] = fourcc
+        return bytes(header) + data
+    dxt, etc = bytearray(), bytearray()
+    for y in range(24):
+        for x in range(40):
+            r,g,b = colors[x // 10]
+            # Flat palette blocks with a small brightness checker to expose block order.
+            if (x // 4 + y // 4) % 2: r,g,b = (max(0,c-24) for c in (r,g,b))
+            rgb565 = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)
+            dxt.extend(struct.pack('<HHI', rgb565, 0, 0))
+            ctrl = ((r >> 4) * 17 << 24) | ((g >> 4) * 17 << 16) | ((b >> 4) * 17 << 8)
+            etc.extend(struct.pack('>II', ctrl, 0))
+    files['media/palette.dds'] = dds(b'DXT1', dxt, 160, 96)
+    files['media/palette.android_etc1_tex'] = dds(b'ETC1', etc, 160, 96)
     audio = io.BytesIO()
     with wave.open(audio, 'wb') as output_audio:
         output_audio.setnchannels(1)
