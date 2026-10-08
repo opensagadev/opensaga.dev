@@ -41,7 +41,7 @@ body { margin: 0; min-width: 320px; background: var(--page); color: var(--text);
 #site-shell { min-height: 100svh; display: flex; flex-direction: column; }
 #site-shell > main { flex: 1; }
 .site-container { width: 100%; max-width: 1040px; margin-inline: auto; padding-inline: 24px; }
-.site-container.site-container-wide { max-width: 1920px; padding-inline: clamp(24px, 4vw, 80px); }
+.site-container.site-container-wide { max-width: 1440px; padding-inline: clamp(24px, 4vw, 40px); }
 .site-content { padding-block: 40px 64px; }
 .site-section + .site-section { margin-top: 48px; }
 .site-title { margin: 0; font-size: clamp(26px, 3vw, 32px); line-height: 1.2; font-weight: 600; letter-spacing: -.02em; }
