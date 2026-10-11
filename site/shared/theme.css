@@ -369,37 +369,19 @@ dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 65svh; 
     color: var(--danger);
 }
 
-#site-shell[hidden], #launcher[hidden],
-.loading-game #site-shell {
+#launcher[hidden],
+.loading-game #launcher {
     display: none;
 }
 
+/* Loading replaces the launcher inside the page until the game starts. */
 #loading-screen {
     display: none;
-    min-height: 100svh;
-    padding: 40px 24px;
-    place-items: center;
-    background: var(--surface);
-    color: var(--text);
+    max-width: 520px;
 }
 
 .loading-game #loading-screen {
-    display: grid;
-}
-
-.loading-content {
-    width: min(100%, 520px);
-}
-
-.loading-brand {
-    width: 190px;
-    margin-bottom: 40px;
-}
-
-.loading-brand svg {
     display: block;
-    width: 100%;
-    height: auto;
 }
 
 #loading-status {
@@ -418,20 +400,29 @@ dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 65svh; 
 }
 
 #game {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 80;
+    margin-top: 8px;
+}
+
+/* The game keeps a 16:9 box that fits the viewport; fullscreen fills the screen. */
+#game-frame {
+    width: min(100%, calc((100svh - 220px) * 16 / 9));
+    min-width: min(100%, 320px);
+    aspect-ratio: 16 / 9;
+    margin-inline: auto;
+    border-radius: 3px;
+    overflow: hidden;
     background: #000000;
 }
 
-#game.running {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+#game-frame:fullscreen {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 0;
 }
 
 #canvas {
+    display: block;
     width: 100%;
     height: 100%;
     outline: 0;
@@ -453,15 +444,108 @@ dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 65svh; 
 }
 
 .game-toolbar {
-    display: none;
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 90;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
 }
 
-#game.running .game-toolbar {
+.game-toolbar-controls {
     display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.game-toolbar .icon-button svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#mute-toggle .volume-off,
+#mute-toggle[aria-pressed="true"] .volume-on {
+    display: none;
+}
+
+#mute-toggle[aria-pressed="true"] .volume-off {
+    display: inline;
+}
+
+.volume-slider {
+    width: 120px;
+    accent-color: var(--accent);
+}
+
+#mute-toggle[aria-pressed="true"] + .volume-slider {
+    opacity: .5;
+}
+
+.player-controls {
+    margin-top: 32px;
+}
+
+.player-controls-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 16px;
+    margin-bottom: 16px;
+}
+
+.focus-hint {
+    margin: 0;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Once the game has focus the hint stays as quiet confirmation. */
+.focus-hint.active {
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.key-map {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px 32px;
+    margin: 0;
+}
+
+.key-map div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.key-map dt {
+    color: var(--muted);
+}
+
+.key-map dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+kbd {
+    display: inline-block;
+    min-width: 22px;
+    padding: 1px 6px;
+    border: 1px solid var(--ui-border-strong);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--text);
+    font: 12px/1.5 var(--mono);
+    text-align: center;
 }
 
 
