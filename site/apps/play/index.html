@@ -376,6 +376,14 @@
             fullscreenToggle.textContent = document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";
             gameCanvas.focus();
         });
+        // SDL handles keys on the game thread, too late to cancel the browser's
+        // default action, so stop keys the page would otherwise scroll with.
+        const scrollKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space",
+            "PageUp", "PageDown", "Home", "End", "Backspace"]);
+        gameCanvas.addEventListener("keydown", event => {
+            if (scrollKeys.has(event.code)) event.preventDefault();
+        });
+
         // Phones without element fullscreen (iOS Safari) keep the windowed player.
         fullscreenToggle.hidden = !document.fullscreenEnabled;
 
