@@ -25,6 +25,7 @@ jobs:
         run: |
           git submodule update --init --remote vendor/saga vendor/nudat vendor/nusave
           git submodule foreach 'git submodule update --init --recursive'
+          cargo update -p nudat -p nusave
           git submodule status >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/setup-node@v4
         with:
