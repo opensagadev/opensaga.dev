@@ -490,8 +490,25 @@ dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 65svh; 
     margin-top: 32px;
 }
 
-.player-controls .asset-help {
+.player-controls-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 16px;
     margin-bottom: 16px;
+}
+
+.focus-hint {
+    margin: 0;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Once the game has focus the hint stays as quiet confirmation. */
+.focus-hint.active {
+    color: var(--muted);
+    font-weight: 400;
 }
 
 .key-map {

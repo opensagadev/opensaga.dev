@@ -80,8 +80,10 @@
             </section>
             <!-- Keep in sync with saga's src/host/platform/keyboard_mapping.hpp and window harness. -->
             <section class="player-controls" aria-labelledby="controls-title">
-                <h2 id="controls-title" class="site-subtitle">Controls</h2>
-                <p class="asset-help">Click the game to give it keyboard focus.</p>
+                <div class="player-controls-heading">
+                    <h2 id="controls-title" class="site-subtitle">Controls</h2>
+                    <p id="focus-hint" class="focus-hint" role="status" hidden></p>
+                </div>
                 <dl class="key-map">
                     <div><dt><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrow keys</dt><dd>Move</dd></div>
                     <div><dt><kbd>Space</kbd> or <kbd>U</kbd></dt><dd>Jump</dd></div>
@@ -210,6 +212,7 @@
                 game.hidden = false;
                 document.documentElement.classList.remove("loading-game");
                 gameCanvas.focus();
+                updateFocusHint();
                 applyCanvasSize();
                 applyVolume();
                 Module.callMain([]);
@@ -383,6 +386,17 @@
         gameCanvas.addEventListener("keydown", event => {
             if (scrollKeys.has(event.code)) event.preventDefault();
         });
+
+        // Tell players when the keyboard reaches the game; SDL only listens on the canvas.
+        const focusHint = document.getElementById("focus-hint");
+        function updateFocusHint() {
+            const focused = document.activeElement === gameCanvas;
+            focusHint.hidden = game.hidden;
+            focusHint.classList.toggle("active", focused);
+            focusHint.textContent = focused ? "Keyboard goes to the game" : "Click the game to use the keyboard";
+        }
+        gameCanvas.addEventListener("focus", updateFocusHint);
+        gameCanvas.addEventListener("blur", updateFocusHint);
 
         // Phones without element fullscreen (iOS Safari) keep the windowed player.
         fullscreenToggle.hidden = !document.fullscreenEnabled;
