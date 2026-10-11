@@ -369,37 +369,19 @@ dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 65svh; 
     color: var(--danger);
 }
 
-#site-shell[hidden], #launcher[hidden],
-.loading-game #site-shell {
+#launcher[hidden],
+.loading-game #launcher {
     display: none;
 }
 
+/* Loading replaces the launcher inside the page until the game starts. */
 #loading-screen {
     display: none;
-    min-height: 100svh;
-    padding: 40px 24px;
-    place-items: center;
-    background: var(--surface);
-    color: var(--text);
+    max-width: 520px;
 }
 
 .loading-game #loading-screen {
-    display: grid;
-}
-
-.loading-content {
-    width: min(100%, 520px);
-}
-
-.loading-brand {
-    width: 190px;
-    margin-bottom: 40px;
-}
-
-.loading-brand svg {
     display: block;
-    width: 100%;
-    height: auto;
 }
 
 #loading-status {

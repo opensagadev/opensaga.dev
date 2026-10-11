@@ -25,18 +25,15 @@
 </head>
 
 <body class="player-page">
-    <main id="loading-screen" aria-labelledby="loading-title">
-        <div class="loading-content">
-            <div class="loading-brand" role="img" aria-label="opensaga"><!--__LOGO__--></div>
-            <h1 id="loading-title" class="site-title">Loading game</h1>
-            <p id="loading-status" role="status" aria-live="polite">Preparing your game...</p>
-            <progress id="loading-progress" class="site-progress" max="1" aria-label="Game data download progress"></progress>
-            <a class="loading-back" href="?">Back to launcher</a>
-        </div>
-    </main>
     <div id="site-shell">
         <!--__HEADER__-->
         <main class="site-container site-content">
+            <section id="loading-screen" aria-labelledby="loading-title">
+                <h1 id="loading-title" class="site-title">Loading game</h1>
+                <p id="loading-status" role="status" aria-live="polite">Preparing your game...</p>
+                <progress id="loading-progress" class="site-progress" max="1" aria-label="Game data download progress"></progress>
+                <a class="loading-back" href="?">Back to launcher</a>
+            </section>
             <section id="launcher" aria-labelledby="launcher-title">
                 <h1 id="launcher-title" class="site-title">Saga web build</h1>
                 <p class="site-intro">Try the experimental web build with your own game assets.
@@ -123,7 +120,7 @@
         let resolveRuntime;
         let rejectRuntime;
         let started = false;
-        let runtimeInitialized = false;
+        let sagaRuntimeReady = false;
         let runtimeLoadStarted = false;
         let loadedObb = null;
         let detectedObbUrl = null;
@@ -313,7 +310,7 @@
 
         // Older saga builds predate these exports; the player still works without them.
         function hasExport(name) {
-            return runtimeInitialized && typeof Module[name] === "function";
+            return sagaRuntimeReady && typeof Module[name] === "function";
         }
 
         // The page owns the canvas layout; the engine resizes its drawing buffer to match.
@@ -391,7 +388,7 @@
                 if (started && message) setStatus(message);
             },
             onRuntimeInitialized() {
-                runtimeInitialized = true;
+                sagaRuntimeReady = true;
                 resolveRuntime();
             },
             onAbort: showRuntimeError,
