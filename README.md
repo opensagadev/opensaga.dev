@@ -124,6 +124,26 @@ Regenerate the synthetic nudat example with
 `python3 scripts/create_example.py --nudat /path/to/nudat`. The checked-in
 archive contains only generated demonstration files.
 
+## Staging
+
+Every production deployment also builds the `staging` branch, if it exists,
+into <https://opensaga.dev/staging/>. Pushing to `staging` requests a new
+deployment from `main`. Unlike production, staging builds its own scripts and
+uses its pinned submodules as-is, so it can point at unmerged Saga, nudat or
+nusave commits. Staging pages carry a banner and a `noindex` tag. A failed
+staging build is reported as a warning and does not block production.
+
+To stage a change, reset `staging` to the branch under test, pin the
+submodules it needs and push:
+
+```sh
+git checkout -B staging my-feature
+git -C vendor/saga fetch origin my-saga-branch
+git -C vendor/saga checkout FETCH_HEAD
+git commit -am "Stage my-feature with my-saga-branch"
+git push --force origin staging
+```
+
 ## Updating source versions
 
 ```sh
