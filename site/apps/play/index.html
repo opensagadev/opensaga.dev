@@ -60,21 +60,55 @@
                 </section>
                 <p id="status" role="status" aria-live="polite"><span id="status-text">Preparing browser...</span></p>
             </section>
+            <section id="game" aria-label="Game" hidden>
+                <div id="game-frame">
+                    <canvas id="canvas" tabindex="0" aria-label="saga game" oncontextmenu="event.preventDefault()"></canvas>
+                </div>
+                <div class="game-toolbar">
+                    <button id="leave-game" class="secondary-button" type="button">Back to launcher</button>
+                    <div class="game-toolbar-controls">
+                        <button id="mute-toggle" class="icon-button" type="button" aria-pressed="false"
+                            aria-label="Mute" title="Mute">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 9h4l5-4v14l-5-4H4z"/>
+                                <path class="volume-on" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>
+                                <path class="volume-off" d="m16 9 6 6m0-6-6 6"/>
+                            </svg>
+                        </button>
+                        <input id="volume" class="volume-slider" type="range" min="0" max="100" step="1" value="100"
+                            aria-label="Volume">
+                        <button id="fullscreen-toggle" class="secondary-button" type="button">Fullscreen</button>
+                    </div>
+                </div>
+            </section>
+            <!-- Keep in sync with saga's src/host/platform/keyboard_mapping.hpp and window harness. -->
+            <section class="player-controls" aria-labelledby="controls-title">
+                <h2 id="controls-title" class="site-subtitle">Controls</h2>
+                <p class="asset-help">Click the game to give it keyboard focus.</p>
+                <dl class="key-map">
+                    <div><dt><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrow keys</dt><dd>Move</dd></div>
+                    <div><dt><kbd>Space</kbd> or <kbd>U</kbd></dt><dd>Jump</dd></div>
+                    <div><dt><kbd>E</kbd> or <kbd>H</kbd></dt><dd>Action</dd></div>
+                    <div><dt><kbd>F</kbd> or <kbd>J</kbd></dt><dd>Special</dd></div>
+                    <div><dt><kbd>K</kbd></dt><dd>Swap character</dd></div>
+                    <div><dt><kbd>Left Ctrl</kbd></dt><dd>Toggle right</dd></div>
+                    <div><dt><kbd>Enter</kbd></dt><dd>Start and confirm</dd></div>
+                    <div><dt><kbd>Esc</kbd></dt><dd>Pause and back</dd></div>
+                    <div><dt>Click</dt><dd>Select menu items</dd></div>
+                </dl>
+            </section>
         </main>
         <!--__FOOTER__-->
     </div>
-
-    <div id="game" aria-label="Game viewport">
-        <canvas id="canvas" tabindex="-1" aria-label="saga game" oncontextmenu="event.preventDefault()"></canvas>
-        <div class="game-toolbar">
-            <button id="leave-game" class="secondary-button" type="button">Back</button>
-        </div>
-    </div>
     <div id="runtime-error" role="alert" hidden></div>
     <script>
-        const siteShell = document.getElementById("site-shell");
+        const launcher = document.getElementById("launcher");
         const game = document.getElementById("game");
+        const gameFrame = document.getElementById("game-frame");
         const gameCanvas = document.getElementById("canvas");
+        const fullscreenToggle = document.getElementById("fullscreen-toggle");
+        const muteToggle = document.getElementById("mute-toggle");
+        const volumeInput = document.getElementById("volume");
         const fileInput = document.getElementById("obb-file");
         const urlForm = document.getElementById("url-form");
         const urlInput = document.getElementById("obb-url");
@@ -89,6 +123,7 @@
         let resolveRuntime;
         let rejectRuntime;
         let started = false;
+        let runtimeInitialized = false;
         let runtimeLoadStarted = false;
         let loadedObb = null;
         let detectedObbUrl = null;
@@ -173,15 +208,18 @@
                 loadedObb = null;
                 Module.FS.mkdirTree("/res");
                 Module.FS.writeFile(`/res/${obbName}`, new Uint8Array(buffer), { canOwn: true });
-                siteShell.hidden = true;
+                // SDL reads the canvas CSS size when it creates the window, so show it first.
+                launcher.hidden = true;
+                game.hidden = false;
                 document.documentElement.classList.remove("loading-game");
-                game.classList.add("running");
                 gameCanvas.focus();
+                applyCanvasSize();
+                applyVolume();
                 Module.callMain([]);
             } catch (error) {
                 started = false;
-                siteShell.hidden = false;
-                game.classList.remove("running");
+                launcher.hidden = false;
+                game.hidden = true;
                 setBusy(false);
                 setStatus(error instanceof Error ? error.message : String(error), true);
                 throw error;
@@ -273,6 +311,77 @@
 
         document.getElementById("leave-game").addEventListener("click", () => location.assign("./"));
 
+        // Older saga builds predate these exports; the player still works without them.
+        function hasExport(name) {
+            return runtimeInitialized && typeof Module[name] === "function";
+        }
+
+        // The page owns the canvas layout; the engine resizes its drawing buffer to match.
+        let canvasSize = null;
+        function applyCanvasSize() {
+            if (canvasSize !== null && hasExport("_saga_set_canvas_size")) Module._saga_set_canvas_size(...canvasSize);
+        }
+        const canvasObserver = new ResizeObserver(([entry]) => {
+            const box = entry.devicePixelContentBoxSize?.[0];
+            const width = box ? box.inlineSize : Math.round(entry.contentRect.width * devicePixelRatio);
+            const height = box ? box.blockSize : Math.round(entry.contentRect.height * devicePixelRatio);
+            if (width <= 0 || height <= 0) return;
+            canvasSize = [width, height];
+            applyCanvasSize();
+        });
+        try {
+            canvasObserver.observe(gameCanvas, { box: "device-pixel-content-box" });
+        } catch {
+            canvasObserver.observe(gameCanvas);
+        }
+
+        const volumeKey = "opensaga.play.volume";
+        const mutedKey = "opensaga.play.muted";
+        try {
+            const savedVolume = localStorage.getItem(volumeKey);
+            if (savedVolume !== null) volumeInput.value = savedVolume;
+            muteToggle.setAttribute("aria-pressed", String(localStorage.getItem(mutedKey) === "1"));
+        } catch {
+            // Storage can be unavailable; the defaults still work.
+        }
+
+        function applyVolume() {
+            const muted = muteToggle.getAttribute("aria-pressed") === "true";
+            const label = muted ? "Unmute" : "Mute";
+            muteToggle.setAttribute("aria-label", label);
+            muteToggle.title = label;
+            if (hasExport("_saga_set_volume")) Module._saga_set_volume(muted ? 0 : Number(volumeInput.value) / 100);
+            try {
+                localStorage.setItem(volumeKey, volumeInput.value);
+                localStorage.setItem(mutedKey, muted ? "1" : "0");
+            } catch {
+                // Storage can be unavailable; the current session still applies the volume.
+            }
+        }
+        volumeInput.addEventListener("input", () => {
+            if (Number(volumeInput.value) > 0) muteToggle.setAttribute("aria-pressed", "false");
+            applyVolume();
+        });
+        muteToggle.addEventListener("click", () => {
+            muteToggle.setAttribute("aria-pressed", String(muteToggle.getAttribute("aria-pressed") !== "true"));
+            applyVolume();
+        });
+        applyVolume();
+
+        fullscreenToggle.addEventListener("click", () => {
+            if (document.fullscreenElement) {
+                void document.exitFullscreen();
+            } else {
+                gameFrame.requestFullscreen().catch(showRuntimeError);
+            }
+        });
+        document.addEventListener("fullscreenchange", () => {
+            fullscreenToggle.textContent = document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";
+            gameCanvas.focus();
+        });
+        // Phones without element fullscreen (iOS Safari) keep the windowed player.
+        fullscreenToggle.hidden = !document.fullscreenEnabled;
+
         var Module = {
             canvas: gameCanvas,
             noInitialRun: true,
@@ -282,6 +391,7 @@
                 if (started && message) setStatus(message);
             },
             onRuntimeInitialized() {
+                runtimeInitialized = true;
                 resolveRuntime();
             },
             onAbort: showRuntimeError,
