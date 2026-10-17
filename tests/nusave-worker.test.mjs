@@ -50,22 +50,26 @@ test('invalid batches, replacements, and oversized inputs preserve the open save
   assert.deepEqual(send('download', { keepDerived: true }).bytes, original);
 });
 
-test('preserves PC layout, metadata, and slot code when editing shared fields', () => {
+test('preserves PC layout and metadata and derives its slot code when editing shared fields', () => {
   const android = WebSave.create(false);
+  android.edit([{name:'coins',value:'1234'},{name:'completion',value:'700'}], false);
   const input = android.bytes(true); android.free();
-  const insertion = 0x2028 + 0x7c20;
+  // PC stores one tutorial bank where Android stores a console and a touch bank.
+  const touchBank = 0x2028 + 0x7c14;
   const bytes = new Uint8Array(input.length - 12);
-  bytes.set(input.slice(0, insertion)); bytes.set(input.slice(insertion + 12), insertion);
+  bytes.set(input.slice(0, touchBank)); bytes.set(input.slice(touchBank + 12), touchBank);
   bytes[0x1028] = 0xa7;
   new DataView(bytes.buffer).setUint32(bytes.length - 4, 0x12345678, true);
   const pc = new WebSave(bytes);
   assert.match(pc.snapshot().kind, /Windows PC/);
-  assert.equal(field(pc, 'coins'), undefined);
+  assert.equal(field(pc, 'coins').offset, touchBank);
+  assert.equal(field(pc, 'coins').editor.value, '1234');
+  assert.equal(field(pc, 'slot_code').editor.value, String(0x12345678));
   pc.edit([{name:'difficulty',value:'5'}], false);
   const output = pc.bytes(false);
   assert.equal(output.length, bytes.length);
   assert.equal(output[0x1028], 0xa7);
-  assert.equal(new DataView(output.buffer).getUint32(output.length - 4, true), 0x12345678);
+  assert.equal(new DataView(output.buffer).getUint32(output.length - 4, true), 700);
   assert.equal(pc.snapshot().checksum_valid, true);
   pc.free();
 });
