@@ -2,8 +2,8 @@
 
 Standalone GitHub Pages site for opensaga. This repository owns the landing
 page, shared design, progress explorer, Saga player, nudat archive explorer, and nusave save editor.
-Local and pull-request builds use pinned source submodules. Deployment builds
-refresh their main branches and record the exact revisions in `build-info.json`.
+CI and deployment builds always use the latest `main` of each source repository
+and record the exact revisions in `build-info.json`.
 
 | Route | Application | Input |
 | --- | --- | --- |
@@ -144,29 +144,26 @@ git commit -am "Stage my-feature with my-saga-branch"
 git push --force origin staging
 ```
 
-## Updating source versions
+## Source versions
+
+Production and pull request checks always build the latest `main` of Saga,
+nudat and nusave: `pages.yml` runs `git submodule update --remote` before
+building and never commits the result. The commits recorded for the
+submodules only serve as a starting checkout and as the pins for staging, so
+they never need bumping for production. To build against the same sources
+locally:
 
 ```sh
-git submodule update --init --recursive
-git -C vendor/saga fetch origin
-git -C vendor/saga checkout <published-saga-commit>
-git -C vendor/nudat fetch origin
-git -C vendor/nudat checkout <published-nudat-commit>
-git -C vendor/nusave fetch origin
-git -C vendor/nusave checkout <published-nusave-commit>
+git submodule update --init --remote vendor/saga vendor/nudat vendor/nusave
+git submodule foreach 'git submodule update --init --recursive'
+cargo update -p nudat -p nusave
 npm run build
 npm test
-git add vendor/saga vendor/nudat vendor/nusave
-git commit
 ```
 
-Only pin commits available in the public source repositories. Each deployment
-includes `build-info.json` with the exact source revisions. The `branch = main`
-submodule hints support `git submodule update --remote`. Local builds and pull
-request checks use the pinned revisions. Main pushes and manual/upstream
-dispatches refresh all applications to their latest `main` commits before
-building, without committing new pins. Refreshing all on every deployment
-build prevents a later site-only push from rolling back an application.
+Each deployment includes `build-info.json` with the exact source revisions.
+Because every build refreshes all applications, a site-only push never rolls
+back an application, and a pull request sees upstream breakage before merge.
 
 ## Deployment
 
